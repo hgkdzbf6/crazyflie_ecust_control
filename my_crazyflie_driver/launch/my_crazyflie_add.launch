@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!--参数基本不变吧-->
+  <arg name="uri" default="radio://0/80/2M" />
+  <arg name="tf_prefix" default="" />
+  <arg name="roll_trim" default="0" />
+  <arg name="pitch_trim" default="0" />
+  <arg name="enable_logging" default="True" />
+  <arg name="use_ros_time" default="True" />
+  <arg name="enable_logging_imu" default="True" />
+  <arg name="enable_logging_temperature" default="True" />
+  <arg name="enable_logging_magnetic_field" default="True" />
+  <arg name="enable_logging_pressure" default="True" />
+  <arg name="enable_logging_battery" default="True" />
+
+  <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
+    <param name="uri" value="$(arg uri)" />
+    <param name="tf_prefix" value="$(arg tf_prefix)" />
+    <param name="roll_trim" value="$(arg roll_trim)" />
+    <param name="pitch_trim" value="$(arg pitch_trim)" />
+    <param name="enable_logging" value="$(arg enable_logging)" />
+    <param name="use_ros_time" value="$(arg use_ros_time)" />
+    <param name="enable_logging_imu" value="$(arg enable_logging_imu)" />
+    <param name="enable_logging_temperature" value="$(arg enable_logging_temperature)" />
+    <param name="enable_logging_magnetic_field" value="$(arg enable_logging_magnetic_field)" />
+    <param name="enable_logging_pressure" value="$(arg enable_logging_pressure)" />
+    <param name="enable_logging_battery" value="$(arg enable_logging_battery)" />     
+    <!--这边多添加了几个参数的呢，用来调试的-->
+    <rosparam>
+        genericLogTopics: ["thrust", "vz_pid"]
+        genericLogTopicFrequencies: [10,10]
+        genericLogTopic_thrust_Variables: ["controller.actuatorThrust"]
+        genericLogTopic_vz_pid_Variables: ["posCtl.VZp", "posCtl.VZi", "posCtl.VZd"]
+    </rosparam>
+  </node>
+</launch>
