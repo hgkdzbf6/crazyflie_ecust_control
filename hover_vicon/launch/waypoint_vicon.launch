@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="joy_dev" default="/dev/input/js0" />
+
+  <arg name="url" default="radio://0/100/250K/E7E7E7E701" />
+  <arg name="frame" default="/vicon/C1/C1" />
+  <!--服务器不变吧-->
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+  <!--控制节点，不变吧-->
+  <node name="joy" pkg="joy" type="joy_node" output="screen">
+    <param name="dev" value="$(arg joy_dev)" />
+  </node>
+
+  <group ns="crazyflie">
+  <!--换成自己的，crazyflie_add-->
+    <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
+      <arg name="uri" value="$(arg url)" />
+      <arg name="tf_prefix" value="crazyflie" />
+      <arg name="enable_logging" value="False" />
+    </include>
+
+    <!--这个是遥控器指令的映射，映射到控制器上，执行起飞降落等操作的呢，这个我记得我也修改过，改之-->
+    <!--python 文件一定要加可执行权限的说-->
+    <node name="joystick_controller" pkg="my_crazyflie_controller" type="myController.py" output="screen">
+      <param name="use_crazyflie_controller" value="True" />
+      <param name="joy_topic" value="/joy" />
+    </node>
+
+    <!--把一些指令，比如降落起飞什么的，翻译成server能够收到的语言吧，改之-->
+    <include file="$(find my_crazyflie_controller)/launch/my_cf2.launch">
+      <arg name="frame" value="$(arg frame)" />
+    </include>
+
+    <!--这个是主要区别-->
+    <node name="pose" pkg="hover_vicon" type="waypoint1.py" output="screen">
+      <param name="frame" value="$(arg frame)" />
+    </node>
+  </group>
+
+  <!-- run vicon bridge -->
+  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+
+</launch>
