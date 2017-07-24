@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!--用法：打 roslaunch hover_vicon multi_waypoint.launch index1:=1 index2:=2 即可-->
+<!--用法：打 roslaunch hover_vicon my_multi_waypoint.launch index1:=1 index2:=2 即可-->
 <launch>
     <arg name="index1" default="1" />  
     <arg name="index2" default="2" />

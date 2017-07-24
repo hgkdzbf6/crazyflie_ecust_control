@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!--运行方式：输入roslaunch hover_vicon multi_hover.launch-->
+<!--运行方式：输入roslaunch hover_vicon my_multi_hover.launch-->
 <launch>
   <!--输入参数，基本也应该不变吧，其实稍微变了变-->
   <arg name="joy_dev" default="/dev/input/js0" />
