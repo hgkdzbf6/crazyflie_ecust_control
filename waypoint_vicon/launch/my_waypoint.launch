@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<!--用法：打 roslaunch hover_vicon my_waypoint.launch index:=1 即可-->
+<!--用法：打 roslaunch waypoint_vicon my_waypoint.launch index:=1 即可-->
 <launch>
     <arg name="index" default="1" />  
     <arg name="px" default="0" />
     <arg name="py" default="0" />
     <arg name="pz" default="1" />
-    <include file="$(find hover_vicon)/launch/waypoint_vicon.launch">
+    <include file="$(find waypoint_vicon)/launch/waypoint_vicon.launch">
         <arg name="url" value="radio://0/100/250K/E7E7E7E70$(arg index)" />
         <arg name="frame" value="/vicon/C$(arg index)/C$(arg index)" />
     </include>

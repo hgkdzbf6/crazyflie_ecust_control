@@ -31,7 +31,7 @@
       <arg name="frame" value="$(arg frame1)" />
     </include>
 
-    <node name="pose" pkg="hover_vicon" type="waypoint1.py" output="screen">
+    <node name="pose" pkg="leader_follower" type="leader_waypoint.py" output="screen">
       <param name="frame" value="$(arg frame1)" />
     </node>
   </group>
@@ -52,7 +52,7 @@
       <arg name="frame" value="$(arg frame2)" />
     </include>
 
-    <node name="pose" pkg="hover_vicon" type="waypoint2.py" output="screen">
+    <node name="pose" pkg="leader_follower" type="follower1.py" output="screen">
       <param name="frame" value="$(arg frame2)" />
     </node>
   </group>

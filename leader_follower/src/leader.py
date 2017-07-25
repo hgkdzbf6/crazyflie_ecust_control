@@ -15,7 +15,7 @@ class Leader():
         self.worldFrame = rospy.get_param("~worldFrame", "/world")
         self.frame = rospy.get_param("~frame")
         self.pubGoal = rospy.Publisher('goal', PoseStamped, queue_size=1)
-        self.leaderAdvertise=rospy.Publisher('leaderPosition',PoseStamped,queue_size=1)
+        # self.leaderAdvertise=rospy.Publisher('leaderPosition',PoseStamped,queue_size=1)
         self.listener = TransformListener()
         rospy.Subscriber("cmd_vel", Twist, self.cmdVelCallback)
         self.goals = goals
@@ -37,7 +37,7 @@ class Leader():
         while not rospy.is_shutdown():
             self.calc_goal(goal,self.goalIndex)
             self.pubGoal.publish(goal)
-            self.leaderAdvertise.publish(goal)
+            # self.leaderAdvertise.publish(goal)
 
             t = self.listener.getLatestCommonTime(self.worldFrame, self.frame)
             if self.listener.canTransform(self.worldFrame, self.frame, t):

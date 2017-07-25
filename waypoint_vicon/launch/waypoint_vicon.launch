@@ -33,7 +33,7 @@
     </include>
 
     <!--这个是主要区别-->
-    <node name="pose" pkg="hover_vicon" type="waypoint1.py" output="screen">
+    <node name="pose" pkg="waypoint_vicon" type="waypoint1.py" output="screen">
       <param name="frame" value="$(arg frame)" />
     </node>
   </group>
