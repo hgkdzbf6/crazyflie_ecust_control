@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
+<!-- roslaunch waypoint_vicon multi_waypoint_vicon.launch-->
 <launch>
   <arg name="joy_dev" default="/dev/input/js0" />
 
-  <arg name="uri1" default="radio://0/80/2M/E7E7E7E701" />
-  <arg name="frame1" default="/vicon/crazyflie1/crazyflie1" />
+  <arg name="uri1" default="radio://0/100/2M/E7E7E7E705" />
+  <arg name="frame1" default="/vicon/C5/C5" />
 
-  <arg name="uri2" default="radio://0/80/2M/E7E7E7E702" />
-  <arg name="frame2" default="/vicon/crazyflie2/crazyflie2" />
+  <arg name="uri2" default="radio://0/100/2M/E7E7E7E706" />
+  <arg name="frame2" default="/vicon/C6/C6" />
 
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
   </include>

@@ -14,6 +14,7 @@ class Leader():
         rospy.init_node('leader', anonymous=True)
         self.worldFrame = rospy.get_param("~worldFrame", "/world")
         self.frame = rospy.get_param("~frame")
+        self.leaderFrame=rospy.get_param("~leaderFrame","/leader")
         self.pubGoal = rospy.Publisher('goal', PoseStamped, queue_size=1)
         # self.leaderAdvertise=rospy.Publisher('leaderPosition',PoseStamped,queue_size=1)
         self.listener = TransformListener()

@@ -1,12 +1,15 @@
 <?xml version="1.0"?>
+<!-- roslaunch hover_vicon hover_vicon.launch-->
 <launch>
   <!--输入参数，基本也应该不变吧-->
-  <arg name="uri" default="radio://0/100/250K/E7E7E7E701" />
-  <arg name="frame" default="/vicon/C1/C1" />
+  <arg name="uri" default="radio://0/100/2M/E7E7E7E702" />
+  <arg name="frame" default="/vicon/C2/C2" />  
+  <!-- <arg name="uri" default="radio://0/100/250K/E7E7E7E701" />
+  <arg name="frame" default="/vicon/C1/C1" />-->
   <arg name="joy_dev" default="/dev/input/js0" />
   <arg name="x" default="0" />
   <arg name="y" default="0" />
-  <arg name="z" default="1" />
+  <arg name="z" default="1.5" />
 
   <!--这个不变，和真飞机通信就靠它了-->
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
@@ -46,8 +49,8 @@
 
     <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
   
-    <node pkg="rosbag" type="record" name="this_is_a_bag"
-      args="/crazyflie/thrust /crazyflie/vz_pid /crazyflie/cmd_vel $(arg frame) -O /home/zbf/haha.bag"/>
+    <!--<node pkg="rosbag" type="record" name="this_is_a_bag"
+      args="/crazyflie/thrust /crazyflie/vz_pid /crazyflie/cmd_vel $(arg frame) -O /home/zbf/haha.bag"/>-->
   </group>
 
   <!-- run vicon bridge -->

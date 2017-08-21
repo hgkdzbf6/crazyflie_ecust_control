@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
+<!--usage: roslaunch waypoint_vicon three_waypoint_vicon.launch-->
 <launch>
   <arg name="joy_dev" default="/dev/input/js0" />
 
   <arg name="uri1" default="radio://0/100/250K/E7E7E7E701" />
   <arg name="frame1" default="/vicon/C1/C1" />
 
-  <arg name="uri2" default="radio://0/10080/250K/E7E7E7E702" />
+  <arg name="uri2" default="radio://0/100/250K/E7E7E7E702" />
   <arg name="frame2" default="/vicon/C2/C2" />
 
   <arg name="uri3" default="radio://0/100/250K/E7E7E7E703" />
@@ -34,7 +35,7 @@
       <arg name="frame" value="$(arg frame1)" />
     </include>
 
-    <node name="pose" pkg="waypoint_vicon" type="waypoint1.py" output="screen">
+    <node name="pose" pkg="waypoint_vicon" type="gw11.py" output="screen">
       <param name="frame" value="$(arg frame1)" />
     </node>
   </group>
@@ -55,7 +56,7 @@
       <arg name="frame" value="$(arg frame2)" />
     </include>
 
-    <node name="pose" pkg="waypoint_vicon" type="waypoint2.py" output="screen">
+    <node name="pose" pkg="waypoint_vicon" type="gw21.py" output="screen">
       <param name="frame" value="$(arg frame2)" />
     </node>
   </group>
@@ -76,7 +77,7 @@
       <arg name="frame" value="$(arg frame3)" />
     </include>
 
-    <node name="pose" pkg="waypoint_vicon" type="waypoint3.py" output="screen">
+    <node name="pose" pkg="waypoint_vicon" type="gw31.py" output="screen">
       <param name="frame" value="$(arg frame3)" />
     </node>
   </group>

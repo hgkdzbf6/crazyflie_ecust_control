@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
+ <!-- roslaunch leader_follower leader_follower.launch -->
 <launch>
   <arg name="joy_dev" default="/dev/input/js0" />
 
-  <arg name="uri1" default="radio://0/80/2M/E7E7E7E701" />
-  <arg name="frame1" default="/vicon/crazyflie1/crazyflie1" />
+  <arg name="uri1" default="radio://0/100/2M/E7E7E7E705" />
+  <arg name="frame1" default="/vicon/C5/C5" />
 
-  <arg name="uri2" default="radio://0/80/2M/E7E7E7E702" />
-  <arg name="frame2" default="/vicon/crazyflie2/crazyflie2" />
+  <arg name="uri2" default="radio://0/100/2M/E7E7E7E707" />
+  <arg name="frame2" default="/vicon/C7/C7" />
 
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
   </include>
@@ -15,10 +16,10 @@
     <param name="dev" value="$(arg joy_dev)" />
   </node>
 
-  <group ns="crazyflie1">
+  <group ns="leader_group">
     <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
       <arg name="uri" value="$(arg uri1)" />
-      <arg name="tf_prefix" value="crazyflie1" />
+      <arg name="tf_prefix" value="leader_group" />
       <arg name="enable_logging" value="False" />
     </include>
 
@@ -36,10 +37,10 @@
     </node>
   </group>
 
-  <group ns="crazyflie2">
+  <group ns="follower_group">
     <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
       <arg name="uri" value="$(arg uri2)" />
-      <arg name="tf_prefix" value="crazyflie2" />
+      <arg name="tf_prefix" value="follower_group" />
       <arg name="enable_logging" value="False" />
     </include>
 

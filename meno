@@ -1,0 +1,4 @@
+
+rosbag record /crazyflie2/cmd_vel /crazyflie1/cmd_vel
+
+rosbag record /crazyflie/cmd_vel 

@@ -1,9 +1,12 @@
 <?xml version="1.0"?>
+<!-- roslaunch waypoint_vicon waypoint_vicon.launch-->
 <launch>
   <arg name="joy_dev" default="/dev/input/js0" />
 
-  <arg name="url" default="radio://0/100/250K/E7E7E7E701" />
-  <arg name="frame" default="/vicon/C1/C1" />
+  <arg name="url" default="radio://0/81/250K/E7E7E7E704" />
+  <arg name="frame" default="/vicon/C4/C4" />  
+  <!--<arg name="url" default="radio://0/100/250K/E7E7E7E701" />
+  <arg name="frame" default="/vicon/C1/C1" />-->
   <!--服务器不变吧-->
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
   </include>

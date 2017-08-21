@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <!--用法：打 roslaunch waypoint_vicon my_multi_waypoint.launch index1:=1 index2:=2 即可-->
 <launch>
-    <arg name="index1" default="1" />  
-    <arg name="index2" default="2" />
+    <arg name="index1" default="5" />  
+    <arg name="index2" default="6" />
     <include file="$(find waypoint_vicon)/launch/multi_waypoint_vicon.launch">
-        <arg name="uri1" value="radio://0/100/250K/E7E7E7E70$(arg index1)" />
+        <arg name="uri1" value="radio://0/100/2M/E7E7E7E70$(arg index1)" />
         <arg name="frame1" value="/vicon/C$(arg index1)/C$(arg index1)" />
 
-        <arg name="uri2" value="radio://0/100/250K/E7E7E7E70$(arg index2)" />
+        <arg name="uri2" value="radio://0/100/2M/E7E7E7E70$(arg index2)" />
         <arg name="frame2" value="/vicon/C$(arg index2)/C$(arg index2)" />
     </include>
 </launch>

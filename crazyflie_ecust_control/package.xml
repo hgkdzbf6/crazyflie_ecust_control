@@ -27,10 +27,11 @@
   <!-- Example: -->
   <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
   <run_depend>hover_vicon</run_depend> 
-  <run_depend>waaypoint_vicon</run_depend>
+  <run_depend>waypoint_vicon</run_depend>
   <run_depend>leader_follower</run_depend>
   <run_depend>my_crazyflie_controller</run_depend>
   <run_depend>my_crazyflie_driver</run_depend>
+  <run_depend>simple_control</run_depend>
 
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->

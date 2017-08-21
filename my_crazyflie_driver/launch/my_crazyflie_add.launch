@@ -7,12 +7,12 @@
   <arg name="roll_trim" default="0" />
   <arg name="pitch_trim" default="0" />
   <arg name="enable_logging" default="True" />
-  <arg name="use_ros_time" default="True" />
-  <arg name="enable_logging_imu" default="True" />
-  <arg name="enable_logging_temperature" default="True" />
-  <arg name="enable_logging_magnetic_field" default="True" />
-  <arg name="enable_logging_pressure" default="True" />
-  <arg name="enable_logging_battery" default="True" />
+  <arg name="use_ros_time" default="False" />
+  <arg name="enable_logging_imu" default="False" />
+  <arg name="enable_logging_temperature" default="False" />
+  <arg name="enable_logging_magnetic_field" default="False" />
+  <arg name="enable_logging_pressure" default="False" />
+  <arg name="enable_logging_battery" default="False" />
 
   <node pkg="crazyflie_driver" type="crazyflie_add" name="crazyflie_add" output="screen">
     <param name="uri" value="$(arg uri)" />
@@ -28,10 +28,12 @@
     <param name="enable_logging_battery" value="$(arg enable_logging_battery)" />     
     <!--这边多添加了几个参数的呢，用来调试的-->
     <rosparam>
-        genericLogTopics: ["thrust", "vz_pid"]
-        genericLogTopicFrequencies: [10,10]
-        genericLogTopic_thrust_Variables: ["controller.actuatorThrust"]
-        genericLogTopic_vz_pid_Variables: ["posCtl.VZp", "posCtl.VZi", "posCtl.VZd"]
+        genericLogTopics: ["control","pwm1","pwm2","stable"]
+        genericLogTopicFrequencies: [30,30,30,30]
+        genericLogTopic_control_Variables: ["controller.actuatorThrust","controller.ctr_roll","controller.ctr_pitch","controller.ctr_yaw",]
+        genericLogTopic_pwm1_Variables: ["motor.m4", "motor.m1"]
+        genericLogTopic_pwm2_Variables: ["motor.m2", "motor.m3"]
+        genericLogTopic_stable_Variables: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw"]
     </rosparam>
   </node>
 </launch>

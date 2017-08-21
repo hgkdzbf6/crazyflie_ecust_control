@@ -18,7 +18,7 @@ class Follower():
         # rospy.Subscriber("/"+leaderName+'/leaderPosition',PoseStamped,self.followerSubCB)
         self.listener = TransformListener()
         self.goal=PoseStamped()
-        self.leaderFrame=rospy.get_param(leaderFrame)
+        self.leaderFrame=leaderFrame
         self.takeoffFlag=0
         self.goalIndex = 0
         rospy.loginfo("demo start!!!!!!!")
@@ -32,7 +32,12 @@ class Follower():
         while not rospy.is_shutdown():
             self.pubGoal.publish(self.goal)
             # rospy.loginfo(self.goal)
+            # rospy.loginfo(self.worldFrame)
+            # rospy.loginfo(self.leaderFrame)
+            # rospy.loginfo(self.frame)
             t = self.listener.getLatestCommonTime(self.worldFrame, self.leaderFrame)
+
+
             if self.listener.canTransform(self.worldFrame, self.leaderFrame, t):
                 position, quaternion = self.listener.lookupTransform(self.worldFrame, self.leaderFrame, t)
                 # rospy.loginfo(position)
@@ -44,7 +49,7 @@ class Follower():
         # rospy.loginfo("info received!")
         self.goal.header.seq += 1
         self.goal.header.stamp = rospy.Time.now()
-        self.goal.pose.position.x=position[0]+0.5
+        self.goal.pose.position.x=position[0]+0.4
         self.goal.pose.position.y=position[1]
         # self.goal.pose.position.z=position.z
         self.goal.pose.position.z=0.8
@@ -52,3 +57,5 @@ class Follower():
         self.goal.pose.orientation.x=quaternion[0]
         self.goal.pose.orientation.y=quaternion[1]
         self.goal.pose.orientation.z=quaternion[2]
+
+
