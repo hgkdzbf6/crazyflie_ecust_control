@@ -14,12 +14,15 @@ find_package(Eigen REQUIRED)
 
 add_message_files(FILES
   LeaderController.msg
+  ThreeAgentMsg.msg
+  IDPose.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   MyTopologies.srv
+  AgentU.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -32,6 +35,7 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
+  geometry_msgs
   std_msgs  # Or other packages containing msgs
 )
 
@@ -71,6 +75,7 @@ catkin_package(
     message_runtime
     std_msgs
     tf
+    my_cpp
 #  DEPENDS system_lib
 )
 
@@ -97,11 +102,11 @@ target_link_libraries(my_crazyflie_controller
   ${catkin_LIBRARIES}
 )
 
-add_executable(center
-  src/center.cpp)
-target_link_libraries(center
-  ${catkin_LIBRARIES}
-)
+# add_executable(center
+#   src/center.cpp)
+# target_link_libraries(center
+#   ${catkin_LIBRARIES}
+# )
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -112,6 +117,26 @@ add_executable(my_crazyflie_controller2
 target_link_libraries(my_crazyflie_controller2
   ${catkin_LIBRARIES}
 )
+
+add_executable(SingleAgent
+  src/SingleAgent.cpp)
+target_link_libraries(SingleAgent
+  ${catkin_LIBRARIES}
+)
+
+add_executable(GoalCenter
+  src/GoalCenter.cpp)
+target_link_libraries(GoalCenter
+  ${catkin_LIBRARIES}
+)
+
+add_executable(ControlCenter
+  src/ControlCenter.cpp)
+target_link_libraries(ControlCenter
+  ${catkin_LIBRARIES}
+)
+
+
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide

@@ -93,7 +93,7 @@ Visualization Manager:
           Shaft Length: 0.1
           Shaft Radius: 0.02
           Shape: Arrow
-          Topic: /center/agent0_pos_goal
+          Topic: /GoalCenter/agent0_pos_goal_no_id
           Unreliable: false
           Value: true
         - Class: rviz/Axes
@@ -140,7 +140,7 @@ Visualization Manager:
           Shaft Length: 0.1
           Shaft Radius: 0.02
           Shape: Arrow
-          Topic: /center/agent1_pos_goal
+          Topic: /GoalCenter/agent1_pos_goal_no_id
           Unreliable: false
           Value: true
         - Class: rviz/Axes
@@ -187,7 +187,7 @@ Visualization Manager:
           Shaft Length: 0.1
           Shaft Radius: 0.02
           Shape: Arrow
-          Topic: /center/agent2_pos_goal
+          Topic: /GoalCenter/agent2_pos_goal_no_id
           Unreliable: false
           Value: true
         - Class: rviz/Axes
@@ -219,12 +219,20 @@ Visualization Manager:
           Value: true
         joy_goal:
           Value: true
-        vicon/C2/C2:
-          Value: false
+        vicon/A1/A1:
+          Value: true
+        vicon/A2/A2:
+          Value: true
+        vicon/A3/A3:
+          Value: true
         vicon/C3/C3:
           Value: true
-        vicon/C7/C7:
-          Value: false
+        vicon/C4/C4:
+          Value: true
+        vicon/C5/C5:
+          Value: true
+        vicon/H1/H1:
+          Value: true
         world:
           Value: false
       Marker Scale: 0.5
@@ -236,15 +244,23 @@ Visualization Manager:
         world:
           joy_goal:
             {}
-          vicon/C2/C2:
+          vicon/A1/A1:
+            {}
+          vicon/A2/A2:
+            {}
+          vicon/A3/A3:
+            {}
+          vicon/C3/C3:
             agent0/base_link:
               {}
-          vicon/C3/C3:
+          vicon/C4/C4:
             agent1/base_link:
               {}
-          vicon/C7/C7:
+          vicon/C5/C5:
             agent2/base_link:
               {}
+          vicon/H1/H1:
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz/Axes

@@ -2,7 +2,6 @@
 #include <tf/transform_listener.h>
 #include <std_srvs/Empty.h>
 #include <geometry_msgs/Twist.h>
-
 #include <Eigen/Dense>
 #include "pid.hpp"
 
@@ -127,7 +126,7 @@ private:
     void pidReset()
     {
         m_pidX.reset();
-        m_pidZ.reset();
+		m_pidY.reset();
         m_pidZ.reset();
         m_pidYaw.reset();
     }
@@ -173,43 +172,58 @@ private:
             // intentional fall-thru
         case Automatic:
             {
-                tf::StampedTransform transform;                    
-                geometry_msgs::Twist msg;
-                geometry_msgs::PoseStamped targetWorld;
-                geometry_msgs::PoseStamped targetDrone;
-                //输出位置的差，输出为transform
-                // m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
-                try{
-                    ros::Time now=ros::Time::now();
-                    m_listener.waitForTransform(m_worldFrame, m_frame,now, ros::Duration(0.5));
-                    m_listener.lookupTransform(m_worldFrame, m_frame, now, transform);
+			tf::StampedTransform transform;
+			geometry_msgs::Twist msg;
+			geometry_msgs::PoseStamped targetWorld;
+			geometry_msgs::PoseStamped targetDrone;
+			//输出位置的差，输出为transform
+			// m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
+			try {
+				ros::Time now = ros::Time::now();
+				m_listener.waitForTransform(m_worldFrame, m_frame, now,
+						ros::Duration(0.5));
+				m_listener.lookupTransform(m_worldFrame, m_frame, now,
+						transform);
 
-                    targetWorld.header.stamp = transform.stamp_;
-                    targetWorld.header.frame_id = m_worldFrame;
-                    targetWorld.pose = m_goal.pose;
+				targetWorld.header.stamp = transform.stamp_;
+				targetWorld.header.frame_id = m_worldFrame;
+				targetWorld.pose = m_goal.pose;
 
-                    //坐标转换
-                    m_listener.transformPose(m_frame, targetWorld, targetDrone);
+				//坐标转换
+				m_listener.transformPose(m_frame, targetWorld, targetDrone);
 
-                    tfScalar roll, pitch, yaw;
-                    tf::Matrix3x3(
-                        tf::Quaternion(
-                            targetDrone.pose.orientation.x,
-                            targetDrone.pose.orientation.y,
-                            targetDrone.pose.orientation.z,
-                            targetDrone.pose.orientation.w
-                        )).getRPY(roll, pitch, yaw);
-                        
-                    if(fabs(pitch)>1.2||fabs(roll)>1.2){
-                        throw new tf::TransformException("fan che le!");
-                    }
-                    //目标是targetDrone，自身因为已经进行过了坐标转换，所以是0
-                    msg.linear.x = m_pidX.update(0, targetDrone.pose.position.x);
-                    msg.linear.y = m_pidY.update(0.0, targetDrone.pose.position.y);
-                    msg.linear.z = m_pidZ.update(0.0, targetDrone.pose.position.z);
-                    msg.angular.z = m_pidYaw.update(0.0, yaw);
-                    //ROS_INFO("%f,%f,%f,%f",msg.linear.x,msg.linear.y,msg.angular.z,msg.linear.z);
-                }catch(tf::TransformException ex){
+				tfScalar roll, pitch, yaw;
+				tf::Matrix3x3(
+						tf::Quaternion(targetDrone.pose.orientation.x,
+								targetDrone.pose.orientation.y,
+								targetDrone.pose.orientation.z,
+								targetDrone.pose.orientation.w)).getRPY(roll,
+						pitch, yaw);
+
+				if (fabs(pitch) > 1.2 || fabs(roll) > 1.2) {
+					throw new tf::TransformException("fan che le!");
+				}
+				//目标是targetDrone，自身因为已经进行过了坐标转换，所以是0
+				msg.linear.x = m_pidX.update(0, targetDrone.pose.position.x);
+				msg.linear.y = m_pidY.update(0.0, targetDrone.pose.position.y);
+				msg.linear.z = m_pidZ.update(0.0, targetDrone.pose.position.z);
+				msg.angular.z = m_pidYaw.update(0.0, yaw);
+
+				std::cout << "targetWorld" << ":  ["
+						<< targetWorld.pose.position.x << ","
+						<< targetWorld.pose.position.y << ","
+						<< targetWorld.pose.position.z << "]" << std::endl;
+
+				std::cout << "targetDrone" << ":  ["
+						<< targetDrone.pose.position.x << ","
+						<< targetDrone.pose.position.y << ","
+						<< targetDrone.pose.position.z << "]" << std::endl;
+
+				std::cout << "agent" << " output:  [" << msg.linear.x << ","
+						<< msg.linear.y << "," << msg.linear.z << "]"
+						<< std::endl;
+				//ROS_INFO("%f,%f,%f,%f",msg.linear.x,msg.linear.y,msg.angular.z,msg.linear.z);
+			} catch (tf::TransformException ex) {
                     ROS_INFO("drop out! %s",ex.what());
                     msg.linear.x=0;
                     msg.linear.y=0;

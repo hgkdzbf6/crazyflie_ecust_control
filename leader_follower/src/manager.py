@@ -28,9 +28,9 @@ class Manager():
         self.pause=0
         # leader的起飞信号，通过给出手柄给出吧，所以要订阅手柄这个主题
 
-        self.leader_node=rospy.get_param("~leader_node")        
-        self.follower1_node=rospy.get_param("~follower1_node")
-        self.follower2_node=rospy.get_param("~follower2_node")
+        self.leader_node=rospy.get_param("~agent0")        
+        self.follower1_node=rospy.get_param("~agent1")
+        self.follower2_node=rospy.get_param("~agent2")
         # 判断是否到达目标点，也就是判断是否进入下一个状态，有开环控制和闭环控制两种方法：
         # 1、开环控制：
         #     定时一段时间，断言在这个时间的话，目标一定到达了这个位置
