@@ -22,9 +22,10 @@
 //所以就自定义了个消息
 
 
-#define USE_AGENT 3
+
 using namespace Eigen;
 
+//一起起飞点这个，否则注释掉就好
 #define FLY_TOGETHER
 //这个类的作用只是用来计算u的
 //给出控制指令交给别的类来做
@@ -42,19 +43,18 @@ public:
 			int frame_id[USE_AGENT]) :
 			state(zbf::Idle), srvCalled(0) {
 		ros::NodeHandle nh;
-		u=Matrix3f::Zero();
 		int i;
 		log = new LogUtils();
 		std::string str_u;
 		std::string str_msg;
-		this->topologies = Matrix3f::Zero();
+		this->topologies = TopoMatrix::Zero();
 		zbf::eigen_topologies(this->topologies,topologies);
 		this->frequency = frequency;
-		u = Matrix3f::Zero();
-		pos = Matrix3f::Zero();
-		posGoal = Matrix3f::Zero();
-		vel = Matrix3f::Zero();
-		velGoal = Matrix3f::Zero();
+		u = PosMatrix::Zero();
+		pos = PosMatrix::Zero();
+		posGoal = PosMatrix::Zero();
+		vel = PosMatrix::Zero();
+		velGoal = PosMatrix::Zero();
 		init_frame_id(frame_id);
 		show_frame_ids();
 		for(i=0;i<USE_AGENT;i++){
@@ -106,12 +106,8 @@ public:
 			}
 		}
 		joySub = nh.subscribe("/joy", 1, &ControlCenter::joyCallback, this);
-        kp<<1,0,0,
-			0,1,0,
-			0,0,1;
-        kv<<1,0,0,
-			0,1,0,
-			0,0,1;
+		kp = Matrix3f::Identity();
+		kv = Matrix3f::Identity();
 	}
 
 	void run() {
@@ -198,62 +194,28 @@ public:
 private:
 
 	void record() {
-		log->log_in((float) pos(0, 0));
-		log->log_pause();
-		log->log_in((float) pos(0, 1));
-		log->log_pause();
-		log->log_in((float) pos(0, 2));
-		log->log_pause();
-		log->log_in((float) pos(1, 0));
-		log->log_pause();
-		log->log_in((float) pos(1, 1));
-		log->log_pause();
-		log->log_in((float) pos(1, 2));
-		log->log_pause();
-		log->log_in((float) pos(2, 0));
-		log->log_pause();
-		log->log_in((float) pos(2, 1));
-		log->log_pause();
-		log->log_in((float) pos(2, 2));
-		log->log_pause();
+		int i, j;
+		for (i = 0; i < USE_AGENT; i++) {
+			for (j = 0; j < USE_AGENT; j++) {
+				log->log_in((float) pos(i, j));
+				log->log_pause();
+			}
+		}
 
-		log->log_in((float) posGoal(0, 0));
-		log->log_pause();
-		log->log_in((float) posGoal(0, 1));
-		log->log_pause();
-		log->log_in((float) posGoal(0, 2));
-		log->log_pause();
-		log->log_in((float) posGoal(1, 0));
-		log->log_pause();
-		log->log_in((float) posGoal(1, 1));
-		log->log_pause();
-		log->log_in((float) posGoal(1, 2));
-		log->log_pause();
-		log->log_in((float) posGoal(2, 0));
-		log->log_pause();
-		log->log_in((float) posGoal(2, 1));
-		log->log_pause();
-		log->log_in((float) posGoal(2, 2));
-		log->log_pause();
+		for (i = 0; i < USE_AGENT; i++) {
+			for (j = 0; j < USE_AGENT; j++) {
+				log->log_in((float) posGoal(i, j));
+				log->log_pause();
+			}
+		}
 
-		log->log_in((float) u(0, 0));
-		log->log_pause();
-		log->log_in((float) u(0, 1));
-		log->log_pause();
-		log->log_in((float) u(0, 2));
-		log->log_pause();
-		log->log_in((float) u(1, 0));
-		log->log_pause();
-		log->log_in((float) u(1, 1));
-		log->log_pause();
-		log->log_in((float) u(1, 2));
-		log->log_pause();
-		log->log_in((float) u(2, 0));
-		log->log_pause();
-		log->log_in((float) u(2, 1));
-		log->log_pause();
-		log->log_in((float) u(2, 2));
-		log->log_pause();
+		for (i = 0; i < USE_AGENT; i++) {
+			for (j = 0; j < USE_AGENT; j++) {
+				log->log_in((float) u(i, j));
+				log->log_pause();
+			}
+		}
+
 		log->log_end();
 	}
 	void timer_callback(const ros::TimerEvent & e) {
@@ -337,19 +299,20 @@ private:
 	}
 	void calc_u(const ros::TimerEvent & e) {
 		float dt=e.current_real.toSec()-e.last_real.toSec();
-        Vector3f sumP;
-        Vector3f sumV;
-		Vector3f sum;
+		UVector sumP;
+		UVector sumV;
+		UVector sum;
         int id;
         int i;
+		int j;
 		id = 0;
 		//外层的循环是计算每个飞机的u
 		//这里面的控制其实是为了保持队形
 		//但是，由于拓扑结构的影响，leader节点的输入计算出来是0
 		//所以，对于leader节点，需要有内部输入，让leader到达指定的目标位置才可以。
 		for (id = 0; id < USE_AGENT; id++) {
-            sumP=Vector3f::Zero();
-            sumV=Vector3f::Zero();
+			sumP = Vector3f::Zero();
+			sumV = Vector3f::Zero();
 			sum = Vector3f::Zero();
 			//内层的循环是u利用的条件
 			i = 0;
@@ -363,19 +326,16 @@ private:
 					vel.col(id)-vel.col(i)
 					-velGoal.col(id)+velGoal.col(i));
         	}
-			log->log_in((float) sumP(0));
-			log->log_pause();
-			log->log_in((float) sumP(1));
-			log->log_pause();
-			log->log_in((float) sumP(2));
-			log->log_pause();
 
+			for (j = 0; j < USE_AGENT; j++) {
+				log->log_in((float) sumP(i));
+				log->log_pause();
+			}
 			sum = -(kp * sumP) - (kv * sumV);
 			u.col(id) = sum;
         }
 		record();
-//		std::cout << "pos: " << pos << std::endl;
-//		std::cout << "u: " << u << std::endl;
+
 	}
 	int get_frame_id(const std::string str) {
 		int len = str.length();
@@ -429,7 +389,7 @@ private:
 	int srvCalled;
 	zbf::State state;
 	zbf::Formation formation;
-	int _buttons[10] = { -1 };
+	int _buttons[10] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 	ros::Subscriber joySub;
 	int frame_ids[USE_AGENT];
 	Matrix3f kp;
@@ -450,13 +410,11 @@ private:
 	ros::ServiceClient emergencySrv[USE_AGENT];
 
 	my_crazyflie_controller::AgentU agentU[USE_AGENT];
-	Matrix3f u;
-	Matrix3f topologies;
+	PosMatrix u;
 
-	Matrix3f pos;
-	Matrix3f vel;
-	Matrix3f posGoal;
-	Matrix3f velGoal;
+	TopoMatrix topologies;
+
+	PosMatrix pos;PosMatrix vel;PosMatrix posGoal;PosMatrix velGoal;
 };
 
 

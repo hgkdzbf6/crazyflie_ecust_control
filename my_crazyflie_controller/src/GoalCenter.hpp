@@ -23,23 +23,19 @@
  *
  */
 
-#ifndef USE_AGENT
-#define USE_AGENT 3
-#endif
+
 using namespace Eigen;
 class GoalCenter {
 public:
-	GoalCenter(int topologies[USE_AGENT][USE_AGENT], int frame_id_1,
-			int frame_id_2, int frame_id_3) :
+	GoalCenter(int topologies[USE_AGENT][USE_AGENT], int* frame_ids) :
 			topologies_switch(false), internal_formation(false), frequency(0.02)
 	{
 		ros::NodeHandle nh;
 		int i;
 		zbf::eigen_topologies(this->topologies, topologies);
-		frame_ids[0] = frame_id_1;
-		frame_ids[1] = frame_id_2;
-		frame_ids[2] = frame_id_3;
+
 		for (i = 0; i < USE_AGENT; i++) {
+			this->frame_ids[i] = frame_ids[i];
 			//这个类需要订阅这样的消息：
 			posSub[i] = nh.subscribe(zbf::agent_str_pos(i), 10,
 					&GoalCenter::sub_pos,

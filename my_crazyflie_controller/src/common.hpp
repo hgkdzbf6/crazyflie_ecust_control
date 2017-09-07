@@ -44,6 +44,46 @@ using namespace Eigen;
 #define USE_AGENT 3
 #endif
 
+#if USE_AGENT==3
+//使用到的矩阵，分为这么几种情况
+//1，就是u，u对应三个方向的
+#define TopoMatrix MyMatrix33f
+//2，就是向量吧
+#define UVector MyVector3f
+//3，pos，vel，posGoal，velGoal用的
+#define PosMatrix MyMatrix33f
+#elif USE_AGENT==4
+//使用到的矩阵，分为这么几种情况
+//1，就是u，u对应三个方向的
+#define TopoMatrix MyMatrix44f
+//2，就是向量吧
+#define UVector MyVector4f
+//3，pos，vel，posGoal，velGoal用的
+#define PosMatrix MyMatrix34f
+
+#elif USE_AGENT==5
+//使用到的矩阵，分为这么几种情况
+//1，就是u，u对应三个方向的
+#define TopoMatrix MyMatrix55f
+//2，就是向量吧
+#define UVector MyVector5f
+//3，pos，vel，posGoal，velGoal用的
+#define PosMatrix MyMatrix35f
+
+#elif USE_AGENT==6
+//使用到的矩阵，分为这么几种情况
+//1，就是u，u对应三个方向的
+#define TopoMatrix MyMatrix66f
+//2，就是向量吧
+#define UVector MyVector6f
+//3，pos，vel，posGoal，velGoal用的
+#define PosMatrix MyMatrix36f
+#endif
+
+typedef Matrix<float, USE_AGENT, USE_AGENT> TopoMatrix;
+typedef Matrix<float, USE_AGENT, 1> UVector;
+typedef Matrix<float, 3, USE_AGENT> PosMatrix;
+
 #define MY_PI 3.141592653589793238462643383279502884
 
 namespace zbf {
