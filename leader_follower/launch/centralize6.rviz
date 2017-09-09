@@ -217,21 +217,19 @@ Visualization Manager:
           Value: true
         agent2/base_link:
           Value: true
-        agent3/base_link:
+        joy_goal:
           Value: true
-        agent4/base_link:
+        vicon/A1/A1:
           Value: true
-        vicon/C1/C1:
+        vicon/A2/A2:
           Value: true
-        vicon/C2/C2:
+        vicon/A3/A3:
           Value: true
         vicon/C3/C3:
           Value: true
         vicon/C4/C4:
           Value: true
         vicon/C5/C5:
-          Value: true
-        vicon/G1/G1:
           Value: true
         vicon/H1/H1:
           Value: true
@@ -244,14 +242,23 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          vicon/C1/C1:
+          joy_goal:
+            {}
+          vicon/A1/A1:
+            {}
+          vicon/A2/A2:
+            {}
+          vicon/A3/A3:
+            {}
+          vicon/C3/C3:
             agent0/base_link:
               {}
-          vicon/C3/C3:
+          vicon/C4/C4:
+            agent1/base_link:
+              {}
+          vicon/C5/C5:
             agent2/base_link:
               {}
-          vicon/G1/G1:
-            {}
           vicon/H1/H1:
             {}
       Update Interval: 0
@@ -299,10 +306,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.450398
+      Pitch: 0.750398
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.340398
+      Yaw: 0.595398
     Saved: ~
 Window Geometry:
   Displays:

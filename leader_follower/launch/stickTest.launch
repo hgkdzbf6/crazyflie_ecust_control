@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+ <!-- roslaunch leader_follower stickTest.launch -->
+<launch>
+
+  <arg name="stick_frame" default="/vicon/G1/G1" />
+  <!-- run vicon bridge -->
+  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+
+  <node name="stickGoal" pkg="leader_follower" type="StickGoal.py" output="screen">
+    <param name="stickFrame" value="$(arg stick_frame)" />
+  </node>
+
+
+    <!--
+     <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" 
+    1args="0 0 0 0 0 0 1 $(arg stick_frame) /stickGoal/base_link 100" />
+    -->
+
+    
+  <!-- run rviz -->
+  <!--第一个是那个飞机的形状吧-->
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find leader_follower)/launch/stick_test.rviz" required="true" />
+
+</launch>

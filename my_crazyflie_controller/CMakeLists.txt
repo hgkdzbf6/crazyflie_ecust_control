@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   std_msgs
   tf  
+  tf_conversions
   cmake_modules
 )
 

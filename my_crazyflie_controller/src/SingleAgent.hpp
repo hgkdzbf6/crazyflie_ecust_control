@@ -17,7 +17,7 @@ typedef enum __AIRCRAFT_STATE{
         Automatic = 1,
         TakingOff = 2,
         Landing = 3,
-		BeforeStable = 4,
+		AnotherController = 4,
 }State;
 
 class SingleAgent{
@@ -40,7 +40,10 @@ public:
 					name), thrust(0), startZ(0), m_pidYaw(-200, -20, 0, -200,
 					200, 0, 0, "yaw"), m_pidX(33, 33, 0.8, -10, 10, -0.5, 0.5,
 					"x"), m_pidY(-33, -33, -0.8, -10, 10, -0.5, 0.5, "y"), m_pidZ(
-					6200, 7500, 1500, 10000, 60000, -2000, 2000, "z") {
+					6200, 7500, 1500, 10000, 60000, -2000, 2000, "z")
+
+					, m_kp(0.187), m_ki(0.013), m_kd(0.107), m_mass(0.033), m_massThrust(
+					150000), m_roll(0), m_pitch(0), m_yaw(0), m_maxAngle(0.4) {
 		//每个不同的飞机有不同的命名空间
 		ros::NodeHandle nh("~");
 		ros::NodeHandle n2;
@@ -59,6 +62,8 @@ public:
 		velGoalSub = n2.subscribe(zbf::center_str_vel_goal(id), 1,
 				&SingleAgent::velGoalChanged,
 				this);
+		accGoalSub = n2.subscribe(zbf::center_str_acc_goal(id), 1,
+				&SingleAgent::accGoalChanged, this);
 		//广播起飞服务
 		takeoffSrv = nh.advertiseService(zbf::takeoff(agent_id),
 				&SingleAgent::takeoff, this);
@@ -92,7 +97,18 @@ private:
 	std::string m_worldFrame;
 	std::string m_agentName;
 	std::string m_agentFrame;
+	Eigen::Vector3d m_oldPosition;
 
+	double m_kp;
+	double m_kd;
+	double m_ki;
+	double m_massThrust;
+	double m_maxAngle;
+	double m_mass;
+
+	double m_roll;
+	double m_pitch;
+	double m_yaw;
 	//拓扑是智能体集合的信息，所以不写
 	//int topologies;
 
@@ -100,6 +116,7 @@ private:
 
 	ros::Subscriber posGoalSub;
 	ros::Subscriber velGoalSub;
+	ros::Subscriber accGoalSub;
 
 	ros::Publisher posPub;
 	ros::Publisher velPub;
@@ -112,6 +129,7 @@ private:
 	geometry_msgs::PoseStamped velMsg;
 	geometry_msgs::PoseStamped posGoalMsg;
 	geometry_msgs::PoseStamped velGoalMsg;
+	geometry_msgs::PoseStamped accGoalMsg;
 
 	ros::ServiceServer takeoffSrv;
 	ros::ServiceServer landSrv;
@@ -200,6 +218,9 @@ private:
 	void velGoalChanged(const my_crazyflie_controller::IDPose::ConstPtr& msg) {
 		velGoalMsg = (msg->pos);
 	}
+	void accGoalChanged(const my_crazyflie_controller::IDPose::ConstPtr& msg) {
+		accGoalMsg = (msg->pos);
+	}
 	bool takeoff(
 	        std_srvs::Empty::Request& req,
 	        std_srvs::Empty::Response& res)
@@ -263,7 +284,7 @@ private:
             {
 				pidReset();
 				m_pidZ.setIntegral(thrust / m_pidZ.ki());
-				state = Automatic;
+				state = AnotherController;
                 thrust = 0;
             }
             else
@@ -426,53 +447,124 @@ private:
 				}
 			}
 			break;
-		case BeforeStable: {
-			tf::StampedTransform transform;
-			geometry_msgs::Twist msg;
-			geometry_msgs::PoseStamped targetWorld;
-			geometry_msgs::PoseStamped targetDrone;
-			//输出位置的差，输出为transform
-			// m_listener.lookupTransform(m_worldFrame, m_frame, ros::Time(0), transform);
-			try {
-				ros::Time now = ros::Time::now();
-				listener.waitForTransform(m_worldFrame, m_agentFrame, now,
-						ros::Duration(0.5));
-				listener.lookupTransform(m_worldFrame, m_agentFrame, now,
-						transform);
+		case AnotherController:
+		{
+			tf::StampedTransform tf_transform;
+			listener.lookupTransform(m_worldFrame, m_agentFrame, ros::Time(0),
+					tf_transform);
 
-				targetWorld.header.stamp = transform.stamp_;
-				targetWorld.header.frame_id = m_worldFrame;
-				targetWorld.pose = posGoalMsg.pose;
+			// CURRENT STATES
+			Eigen::Affine3d transform;
+			tf::transformTFToEigen(tf_transform, transform);
 
-				//坐标转换
-				listener.transformPose(m_agentFrame, targetWorld, targetDrone);
+			// Current position
+			Eigen::Vector3d current_position = transform.translation();
 
-				tfScalar roll, pitch, yaw;
-				tf::Matrix3x3(
-						tf::Quaternion(targetDrone.pose.orientation.x,
-								targetDrone.pose.orientation.y,
-								targetDrone.pose.orientation.z,
-								targetDrone.pose.orientation.w)).getRPY(roll,
-						pitch, yaw);
+			// Current velocity
+			Eigen::Vector3d current_velocity =
+					(current_position - m_oldPosition) / dt;
+			m_oldPosition = current_position;
 
-				if (fabs(pitch) > 1.2 || fabs(roll) > 1.2) {
-					throw new tf::TransformException("fan che le!");
-				}
-				//目标是targetDrone，自身因为已经进行过了坐标转换，所以是0
-				msg.linear.x = m_pidX.update(0, targetDrone.pose.position.x);
-				msg.linear.y = m_pidY.update(0.0, targetDrone.pose.position.y);
-				msg.linear.z = m_pidZ.update(0.0, targetDrone.pose.position.z);
-				msg.angular.z = m_pidYaw.update(0.0, yaw);
-				//ROS_INFO("%f,%f,%f,%f",msg.linear.x,msg.linear.y,msg.angular.z,msg.linear.z);
-			} catch (tf::TransformException ex) {
-				ROS_INFO("drop out! %s", ex.what());
-				msg.linear.x = 0;
-				msg.linear.y = 0;
-				msg.linear.z = 0;
-				msg.angular.z = 0;
-				state = Idle;
+			// Current Orientation
+			// see m_roll, m_pitch, m_yaw
+
+			// Current angular velocity
+			//Eigen::Vector3d current_angular_velocity(
+			//    m_imu.angular_velocity.x,
+			//    m_imu.angular_velocity.y,
+			//    m_imu.angular_velocity.z
+			//);
+
+			//DESIRED STATES
+			//这个是个消息，包含了很多消息，位置，速度和加速度都有
+			//但是我的消息是有位置和速度的， 暂时先不加加速度咋样
+			//？嗯对就这么办
+			//crazyflie_controller::QuadcopterTrajectoryPoint trajectoryPoint;
+			//getCurrentTrajectoryPoint(trajectoryPoint);
+
+			// Desired position
+			Eigen::Vector3d target_position(posGoalMsg.pose.position.x,
+					posGoalMsg.pose.position.y, posGoalMsg.pose.position.z);
+
+			//Desired velocity
+			Eigen::Vector3d target_velocity(velGoalMsg.pose.position.x,
+					velGoalMsg.pose.position.y, velGoalMsg.pose.position.z);
+
+			//Desired acceleration
+			Eigen::Vector3d target_acceleration(accGoalMsg.pose.position.x,
+					accGoalMsg.pose.position.y, accGoalMsg.pose.position.z);
+
+			//Desired yaw
+			//double target_yaw = trajectoryPoint.yaw;
+			double target_yaw = 0;
+
+			// set this to 0 because we don't want to rotate during the flight
+			Eigen::Vector3d target_angular_velocity(0, 0, 0);
+
+			//CALCULATE THRUST
+
+			// Position Error
+			Eigen::Vector3d current_r_error = target_position
+					- current_position;
+			// Velocity Error
+			Eigen::Vector3d current_v_error = target_velocity
+					- current_velocity;
+			// Desired thrust
+			Eigen::Vector3d target_thrust = m_kp * current_r_error
+					+ m_kd * current_v_error + m_mass * target_acceleration
+					+ m_mass * Eigen::Vector3d(0, 0, 9.81);
+			// Current z_axis
+			Eigen::Vector3d current_z_axis(-sin(m_pitch) * cos(m_roll),
+					sin(m_roll), cos(m_pitch) * cos(m_roll));
+			// Current thrust
+			double current_thrust = target_thrust.dot(current_z_axis)
+					* m_massThrust;
+			ROS_INFO("%f,%f", current_thrust, current_position(2));
+
+			// CALCULATE AXIS
+			// // Desired z_axis
+			Eigen::Vector3d z_axis_desired = target_thrust
+					/ target_thrust.norm();
+			// // Desired x_center_axis
+			// Eigen::Vector3d x_center_axis_desired = Eigen::Vector3d(sin(target_yaw), cos(target_yaw), 0);
+			// // Desired y_axis
+			// Eigen::Vector3d y_axis_desired = z_axis_desired.cross(x_center_axis_desired);
+			// // Desired x_axis
+			// Eigen::Vector3d x_axis_desired = y_axis_desired.cross(z_axis_desired);
+
+			Eigen::Vector3d x_axis_desired = z_axis_desired.cross(
+					Eigen::Vector3d(sin(target_yaw), cos(target_yaw), 0));
+			//x_axis_desired.normalize();
+			Eigen::Vector3d y_axis_desired = z_axis_desired.cross(
+					x_axis_desired);
+
+			// CONTROL
+
+			tfScalar current_euler_roll, current_euler_pitch, current_euler_yaw;
+			tf::Matrix3x3(tf_transform.getRotation()).getRPY(current_euler_roll,
+					current_euler_pitch, current_euler_yaw);
+
+			double thrust = current_thrust; //z_axis_desired.dot(current_z_axis);
+			if (thrust < 0) {
+				thrust = 0;
 			}
+			if (thrust > 65536) {
+				thrust = 65536;
+			}
+
+			double pitch_angle = asin(x_axis_desired(2)) * 180.0 / M_PI;
+			double yaw_angle = target_yaw;
+			// double yaw_angle = atan2(x_axis_desired.getY(), x_axis_desired.getX());
+			double roll_angle = atan2(y_axis_desired(2), z_axis_desired(2))
+					* 180.0 / M_PI;
+
+			geometry_msgs::Twist msg;
+			msg.linear.x = pitch_angle;
+			msg.linear.y = -roll_angle;
+			msg.linear.z = thrust;
+			msg.angular.z = m_pidYaw.update(current_euler_yaw, yaw_angle);
 			cmdPub.publish(msg);
+
 		}
 			break;
     	case Idle:

@@ -7,14 +7,42 @@ int main(int argc, char **argv){
     // 首先初始化节点
     ros::init(argc, argv, "center");
     ros::NodeHandle n("~");
+#if USE_AGENT==1
+	int topologies[USE_AGENT][USE_AGENT]= {0};
+#elif USE_AGENT==2
+	int topologies[USE_AGENT][USE_AGENT]= {0,0,-1,1};
+#elif USE_AGENT==3
 	int topologies[USE_AGENT][USE_AGENT] = { { 0, 0, 0 }, { -1, 1, 0 }, { 0, -1,
 			1 } };
+#elif USE_AGENT==4
+	int topologies[USE_AGENT][USE_AGENT] = { { 0, 0, 0, 0 }, { -1, 1, 0, 0 }, {
+			0, -1, 1, 0 }, { 0, 0, -1, 1 } };
+#elif USE_AGENT==5
+	int topologies[USE_AGENT][USE_AGENT] = { { 0, 0, 0, 0, 0 },
+			{ -1, 1, 0, 0, 0 }, { 0, -1, 1, 0, 0 }, { 0, 0, -1, 1, 0 }, { 0, 0,
+					0, -1, 1 } };
+#elif USE_AGENT==6
+	int topologies[USE_AGENT][USE_AGENT] = { { 0, 0, 0, 0, 0, 0 }, { -1, 1, 0,
+			0, 0, 0 }, { 0, -1, 1, 0, 0, 0 }, { 0, 0, -1, 1, 0, 0 }, { 0, 0, 0,
+			-1, 1, 0 }, { 0, 0, 0, 0, -1, 1 } };
+#elif USE_AGENT==7
+	int topologies[USE_AGENT][USE_AGENT] = { { 0, 0, 0, 0, 0, 0, 0 }, { -1, 1,
+			0, 0, 0, 0, 0 }, { 0, -1, 1, 0, 0, 0, 0 }, { 0, 0, -1, 1, 0, 0, 0 },
+			{ 0, 0, 0, -1, 1, 0, 0 }, { 0, 0, 0, 0, -1, 1, 0 }, { 0, 0, 0, 0, 0,
+					-1, 1 } };
+#endif
+
     // 就先写三架飞机吧。
     //得到名字之后，初始化结构体
 	int frame_ids[USE_AGENT];
-#if USE_AGENT>=3
+
+#if USE_AGENT>=1
 	n.getParam("frame_id_1", frame_ids[0]);
+#endif
+#if USE_AGENT>=2
 	n.getParam("frame_id_2", frame_ids[1]);
+#endif
+#if USE_AGENT>=3
 	n.getParam("frame_id_3", frame_ids[2]);
 #endif
 #if USE_AGENT>=4

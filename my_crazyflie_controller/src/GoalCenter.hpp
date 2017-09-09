@@ -23,12 +23,16 @@
  *
  */
 
+//#define JOY_CONTROL
+#define STICK_CONTROL
+
 
 using namespace Eigen;
 class GoalCenter {
 public:
 	GoalCenter(int topologies[USE_AGENT][USE_AGENT], int* frame_ids) :
-			topologies_switch(false), internal_formation(false), frequency(0.02)
+			topologies_switch(false), internal_formation(false), frequency(
+					0.02), lineNum(0)
 	{
 		ros::NodeHandle nh;
 		int i;
@@ -43,20 +47,35 @@ public:
 			velSub[i] = nh.subscribe(zbf::agent_str_vel(i), 10,
 					&GoalCenter::sub_vel,
 					this);
+			accSub[i] = nh.subscribe(zbf::agent_str_acc(i), 10,
+					&GoalCenter::sub_acc, this);
 			//这个类广播这样的消息：
 			posGoalPub[i] = nh.advertise<my_crazyflie_controller::IDPose>(
 					zbf::center_str_pos_goal(i), 10);
 			velGoalPub[i] = nh.advertise<my_crazyflie_controller::IDPose>(
 					zbf::center_str_vel_goal(i), 10);
+			accGoalPub[i] = nh.advertise<my_crazyflie_controller::IDPose>(
+					zbf::center_str_vel_goal(i), 10);
 			posGoalPubNoID[i] = nh.advertise<geometry_msgs::PoseStamped>(
 					zbf::center_str_pos_goal_no_id(i), 10);
 			velGoalPubNoID[i] = nh.advertise<geometry_msgs::PoseStamped>(
 					zbf::center_str_vel_goal_no_id(i), 10);
+			accGoalPubNoID[i] = nh.advertise<geometry_msgs::PoseStamped>(
+					zbf::center_str_vel_goal_no_id(i), 10);
 		}
+#ifdef JOY_CONTROL
 		joyGoalSub = nh.subscribe("/joy_goal", 10,
 				&GoalCenter::joy_goal_callback,
 				this);
+#endif
+#ifdef STICK_CONTROL
+		stickGoalSub = nh.subscribe("/stick_goal", 10,
+				&GoalCenter::stick_goal_callback, this);
+#endif
 		joySub = nh.subscribe("/joy", 2, &GoalCenter::joy_callback, this);
+
+		helper.read("/home/zbf/dance1.csv", dataFromFile);
+		lineNum = helper.CountLines("/home/zbf/dance1.csv");
 	}
 	void run() {
 		ros::NodeHandle nh("~");
@@ -91,6 +110,7 @@ private:
 	V3 generate_circle(double i, double theta, double radius,
 			double circle_time, double dt) {
 		static V3 v3;
+		ROS_FATAL("need fix");
 		v3.x = joy_goal.pose.position.x + radius * sin(
 		MY_PI / 180 * (theta + dt * i / circle_time * 360.0));
 		v3.y = joy_goal.pose.position.y + radius * cos(
@@ -108,6 +128,22 @@ private:
 		v3.z = v.z;
 		return v3;
 	}
+	V3 generate_rotate(double radius, const int id, int i, double dt,
+			double period) {
+		V3 v;
+		v.x = 0.6
+				* cos(
+						2 * MY_PI
+								* ((float) id / USE_AGENT
+										+ (float) i * dt / period));
+		v.y = 0.6
+				* sin(
+						2 * MY_PI
+								* ((float) id / USE_AGENT
+										+ (float) i * dt / period));
+		v.z = 0.8;
+		return v;
+	}
 	//控制方法应该多弄几个函数出来吧。
 	//首先是用手柄控制leader
 	//其次是画圆
@@ -118,8 +154,27 @@ private:
 	}
 
 	void hover(geometry_msgs::PoseStamped & msg, const int id) {
-		msg.pose.position.x = 0.5 * id - 1;
+		//		msg.pose.position.x = 0.6 * cos(2 * MY_PI * (float) id / USE_AGENT);
+		//		msg.pose.position.y = 0.6 * sin(2 * MY_PI * (float) id / USE_AGENT);
+		//		msg.pose.position.z = 0.05;
+		msg.pose.position.x = -1.25 + id * 0.5;
 		msg.pose.position.y = 0;
+		msg.pose.position.z = 0.4;
+	}
+	void rotate(geometry_msgs::PoseStamped & msg, const int id, const int i,
+			const double dt, const double period) {
+		msg.pose.position.x =
+				0.6
+						* cos(
+								2 * MY_PI
+										* ((float) id / USE_AGENT
+										+ (float) i * dt / period));
+		msg.pose.position.y =
+				0.6
+						* sin(
+								2 * MY_PI
+										* ((float) id / USE_AGENT
+										+ (float) i * dt / period));
 		msg.pose.position.z = 0.8;
 	}
 
@@ -146,25 +201,38 @@ private:
 
 	double frequency;
 	int frame_ids[USE_AGENT];
-	Matrix3f topologies;
+	TopoMatrix topologies;
 	bool topologies_switch;
 	bool internal_formation;
 	ros::Publisher posGoalPub[USE_AGENT];
 	ros::Publisher velGoalPub[USE_AGENT];
+	ros::Publisher accGoalPub[USE_AGENT];
 	ros::Publisher posGoalPubNoID[USE_AGENT];
 	ros::Publisher velGoalPubNoID[USE_AGENT];
+	ros::Publisher accGoalPubNoID[USE_AGENT];
 	ros::Subscriber posSub[USE_AGENT];
 	ros::Subscriber velSub[USE_AGENT];
+	ros::Subscriber accSub[USE_AGENT];
 
+	CSVHelper helper;
+	std::vector<std::vector<double>> dataFromFile;
+	int lineNum;
+#ifdef JOY_CONTROL
 	ros::Subscriber joyGoalSub;
+#endif
+#ifdef STICK_CONTROL
+	ros::Subscriber stickGoalSub;
+#endif
 	ros::Subscriber joySub;
 
 	MyFilter filters[USE_AGENT];
 	geometry_msgs::PoseStamped pos[USE_AGENT];
 	geometry_msgs::PoseStamped vel[USE_AGENT];
+	geometry_msgs::PoseStamped acc[USE_AGENT];
 	V3 v[USE_AGENT];
 	V3 v_base[USE_AGENT];
 	geometry_msgs::PoseStamped joy_goal;
+	geometry_msgs::PoseStamped stick_goal;
 	sensor_msgs::Joy joy;
 	/*
 	 * 问题：中间节点还需要什么信息？
@@ -180,6 +248,10 @@ private:
 		int id = get_frame_id(msg->header.frame_id);
 		vel[id] = *msg;
 	}
+	void sub_acc(const geometry_msgs::PoseStamped::ConstPtr & msg) {
+		int id = get_frame_id(msg->header.frame_id);
+		acc[id] = *msg;
+	}
 	void joy_callback(const sensor_msgs::Joy::ConstPtr & msg) {
 		joy = *msg;
 		static int last_joy_value_5 = 0;
@@ -188,9 +260,9 @@ private:
 			//改变拓扑结构
 			ROS_INFO("topologies changed!");
 			if (topologies_switch) {
-				topologies << 0, 0, 0, -1, 1, 0, 0, -1, 1;
+				//topologies << 0, 0, 0, -1, 1, 0, 0, -1, 1;
 			} else {
-				topologies << 0, 0, 0, 0, 1, -1, -1, 0, 1;
+				//topologies << 0, 0, 0, 0, 1, -1, -1, 0, 1;
 			}
 			topologies_switch = !topologies_switch;
 		} else if (joy.buttons[4] == 1 && last_joy_value_4 == 0) {
@@ -202,6 +274,9 @@ private:
 
 	void joy_goal_callback(const geometry_msgs::PoseStamped::ConstPtr & msg) {
 		joy_goal = *msg;
+	}
+	void stick_goal_callback(const geometry_msgs::PoseStamped::ConstPtr & msg) {
+		stick_goal = *msg;
 	}
 	V3 msg2V3(const geometry_msgs::PoseStamped& msg, V3 offset) {
 		V3 v;
@@ -226,9 +301,23 @@ private:
 		}
 		if (internal_formation) {
 			//默认中心点是joy_goal
-			v[0] = generate_circle(times, 0, 0, 20, frequency);
-			v[1] = generate_circle(times, 0, 1, 20, frequency, v[0]);
-			v[2] = generate_circle(times, 0, 0.5, 20, frequency, v[1]);
+//			v[0] = generate_circle(times, 0, 0, 20, frequency);
+//			v[1] = generate_circle(times, 0, 1, 20, frequency, v[0]);
+//			v[2] = generate_circle(times, 0, 0.5, 20, frequency, v[1]);
+//			for (i = 0; i < USE_AGENT; i++) {
+//				v[i] = generate_rotate(0.6, i, times, 0.02, 20.0);
+//			}
+//从文件中读入，用这个
+			for (i = 0; i < USE_AGENT; i++) {
+				v[i].x = dataFromFile[times / 4][i * 3];
+				v[i].y = dataFromFile[times / 4][i * 3 + 1];
+				v[i].z = dataFromFile[times / 4][i * 3 + 2];
+			}
+
+//从stick_goal读入，用这个
+//			v[0].x = stick_goal.pose.position.x;
+//			v[0].y = stick_goal.pose.position.y;
+//			v[0].z = stick_goal.pose.position.z;
 			//第一种情况：绝对位置
 //			v_base[0] = generate_sin(times, 0, 1, 10, frequency, 0, 0, 0.8);
 //			v_base[1] = generate_sin(times, 0, 1, 10, frequency, 0.5, 0.5, 0.8);
@@ -256,12 +345,13 @@ private:
 				v_base[1].y = filters[2].output.y + 0.5;
 				v_base[1].z = filters[2].output.z;
 			}
+			times++;
 		}
 		for (i = 0; i < USE_AGENT; i++) {
 			pub_pos_goal(i);
 			pub_vel_goal(i);
+			pub_acc_goal(i);
 		}
-		times++;
 	}
 
 	int get_frame_id(const std::string str) {
@@ -308,19 +398,19 @@ private:
 //			} else {
 //				//如果不是leader的话
 //				//u2
-////				msg.pose.position.x = 0;
-////				msg.pose.position.y = 0;
-////				msg.pose.position.z = 0;
-////				for (i = 0; i < USE_AGENT; i++) {
-////					if (id == i)
-////						continue;
-////					msg.pose.position.x += -topologies(id, i)
-////							* (pos[i].pose.position.x + 0.5 * (id - i));
-////					msg.pose.position.y += -topologies(id, i)
-////							* (pos[i].pose.position.y);
-////					msg.pose.position.z += -topologies(id, i)
-////							* (pos[i].pose.position.z);
-////				}
+//				msg.pose.position.x = 0;
+//				msg.pose.position.y = 0;
+//				msg.pose.position.z = 0;
+//				for (i = 0; i < USE_AGENT; i++) {
+//					if (id == i)
+//						continue;
+//					msg.pose.position.x += -topologies(id, i)
+//							* (pos[i].pose.position.x + 0.5 * (id - i));
+//					msg.pose.position.y += -topologies(id, i)
+//							* (pos[i].pose.position.y);
+//					msg.pose.position.z += -topologies(id, i)
+//							* (pos[i].pose.position.z);
+//				}
 //
 //				//u1+u2
 //				msg.pose.position.x = joy_goal.pose.position.x + id * 0.5;
@@ -328,7 +418,10 @@ private:
 //				msg.pose.position.z = joy_goal.pose.position.z;
 //			}
 //			circle(msg, id);
-			linear_sin_control(msg, id);
+			msg.pose.position.x = v[id].x;
+			msg.pose.position.y = v[id].y;
+			msg.pose.position.z = v[id].z;
+			//linear_sin_control(msg, id);
 		}
 
 		//不控制角度，只控制位置
@@ -362,5 +455,26 @@ private:
 		id_msg.id = id;
 		id_msg.pos = msg;
 		velGoalPub[id].publish(id_msg);
+	}
+	void pub_acc_goal(int id) {
+		//算法goes here
+		my_crazyflie_controller::IDPose id_msg;
+		geometry_msgs::PoseStamped msg;
+		msg.header.frame_id = "/world";
+//		msg.header.frame_id = get_frame(id);
+		msg.header.seq += 1;
+		msg.header.stamp = ros::Time::now();
+		msg.pose.position.x = 0;
+		msg.pose.position.y = 0;
+		msg.pose.position.z = 0;
+		msg.pose.orientation.w = 1;
+		msg.pose.orientation.x = 0;
+		msg.pose.orientation.y = 0;
+		msg.pose.orientation.z = 0;
+		accGoalPubNoID[id].publish(msg);
+		//算法goes here
+		id_msg.id = id;
+		id_msg.pos = msg;
+		accGoalPub[id].publish(id_msg);
 	}
 };

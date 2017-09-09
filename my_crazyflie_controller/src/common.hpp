@@ -9,6 +9,7 @@
 #define CRAZYFLIE_ECUST_MY_CRAZYFLIE_CONTROLLER_SRC_COMMON_HPP_
 
 #include <ros/ros.h>
+#include <tf_conversions/tf_eigen.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
 #include <std_srvs/Empty.h>
@@ -24,6 +25,7 @@
 #include "my_crazyflie_controller/AgentU.h"
 #include "my_crazyflie_controller/IDPose.h"
 #include "LogUtils.hpp"
+#include "CsvHelper.hpp"
 using namespace Eigen;
 /**
  * 总结：
@@ -41,10 +43,26 @@ using namespace Eigen;
  * 就是这样瞄～
  */
 #ifndef USE_AGENT
-#define USE_AGENT 3
+#define USE_AGENT 6
 #endif
 
-#if USE_AGENT==3
+#if USE_AGENT==1
+//使用到的矩阵，分为这么几种情况
+//1，就是u，u对应三个方向的
+#define TopoMatrix MyMatrix11f
+//2，就是向量吧
+#define UVector MyVector1f
+//3，pos，vel，posGoal，velGoal用的
+#define PosMatrix MyMatrix31f
+#elif USE_AGENT==2
+//使用到的矩阵，分为这么几种情况
+//1，就是u，u对应三个方向的
+#define TopoMatrix MyMatrix22f
+//2，就是向量吧
+#define UVector MyVector2f
+//3，pos，vel，posGoal，velGoal用的
+#define PosMatrix MyMatrix32f
+#elif USE_AGENT==3
 //使用到的矩阵，分为这么几种情况
 //1，就是u，u对应三个方向的
 #define TopoMatrix MyMatrix33f
@@ -78,6 +96,14 @@ using namespace Eigen;
 #define UVector MyVector6f
 //3，pos，vel，posGoal，velGoal用的
 #define PosMatrix MyMatrix36f
+#elif USE_AGENT==7
+//使用到的矩阵，分为这么几种情况
+//1，就是u，u对应三个方向的
+#define TopoMatrix MyMatrix77f
+//2，就是向量吧
+#define UVector MyVector7f
+//3，pos，vel，posGoal，velGoal用的
+#define PosMatrix MyMatrix37f
 #endif
 
 typedef Matrix<float, USE_AGENT, USE_AGENT> TopoMatrix;
@@ -88,8 +114,8 @@ typedef Matrix<float, 3, USE_AGENT> PosMatrix;
 
 namespace zbf {
 
-int frame_ids[USE_AGENT] = { -1, -1, -1 };
-int frame_ids2[USE_AGENT] = { -2, -2, -2 };
+int frame_ids[USE_AGENT] = { 0 };
+int frame_ids2[USE_AGENT] = { 0 };
 
 int constrain(int value, int max, int min) {
 	int ret = value;
@@ -108,10 +134,10 @@ float constrainf(float value, float max, float min) {
 		ret = min;
 	return ret;
 }
-void eigen_topologies(Eigen::Matrix3f& top, const int data[3][3]) {
+void eigen_topologies(TopoMatrix& top, const int data[USE_AGENT][USE_AGENT]) {
 	int i, j;
-	for (i = 0; i < 3; i++) {
-		for (j = 0; j < 3; j++) {
+	for (i = 0; i < USE_AGENT; i++) {
+		for (j = 0; j < USE_AGENT; j++) {
 			top(i, j) = data[i][j];
 		}
 	}
@@ -156,17 +182,26 @@ const std::string str_pos(const int id) {
 const std::string str_vel(const int id) {
 	return "/agent" + std::to_string(id) + "_vel";
 }
+const std::string str_acc(const int id) {
+	return "/agent" + std::to_string(id) + "_acc";
+}
 const std::string str_pos_goal(const int id) {
 	return "/agent" + std::to_string(id) + "_pos_goal";
 }
 const std::string str_vel_goal(const int id) {
 	return "/agent" + std::to_string(id) + "_vel_goal";
 }
+const std::string str_acc_goal(const int id) {
+	return "/agent" + std::to_string(id) + "_acc_goal";
+}
 const std::string center_str_pos_goal(const int id) {
 	return "/GoalCenter/" + str_pos_goal(id);
 }
 const std::string center_str_vel_goal(const int id) {
 	return "/GoalCenter/" + str_vel_goal(id);
+}
+const std::string center_str_acc_goal(const int id) {
+	return "/GoalCenter/" + str_acc_goal(id);
 }
 const std::string center_str_vel_goal_no_id(const int id) {
 	return "/GoalCenter/" + str_vel_goal(id) + "_no_id";
@@ -179,6 +214,9 @@ const std::string agent_str_pos(const int id) {
 }
 const std::string agent_str_vel(const int id) {
 	return "/agent" + std::to_string(id) + "/" + str_vel(id);
+}
+const std::string agent_str_acc(const int id) {
+	return "/agent" + std::to_string(id) + "/" + str_acc(id);
 }
 const int get_id(const std::string str) {
 	return str.c_str()[0] - '0';

@@ -195,21 +195,21 @@ private:
 
 	void record() {
 		int i, j;
-		for (i = 0; i < USE_AGENT; i++) {
+		for (i = 0; i < 3; i++) {
 			for (j = 0; j < USE_AGENT; j++) {
 				log->log_in((float) pos(i, j));
 				log->log_pause();
 			}
 		}
 
-		for (i = 0; i < USE_AGENT; i++) {
+		for (i = 0; i < 3; i++) {
 			for (j = 0; j < USE_AGENT; j++) {
 				log->log_in((float) posGoal(i, j));
 				log->log_pause();
 			}
 		}
 
-		for (i = 0; i < USE_AGENT; i++) {
+		for (i = 0; i < 3; i++) {
 			for (j = 0; j < USE_AGENT; j++) {
 				log->log_in((float) u(i, j));
 				log->log_pause();
@@ -299,9 +299,9 @@ private:
 	}
 	void calc_u(const ros::TimerEvent & e) {
 		float dt=e.current_real.toSec()-e.last_real.toSec();
-		UVector sumP;
-		UVector sumV;
-		UVector sum;
+		Vector3f sumP;
+		Vector3f sumV;
+		Vector3f sum;
         int id;
         int i;
 		int j;
@@ -327,10 +327,6 @@ private:
 					-velGoal.col(id)+velGoal.col(i));
         	}
 
-			for (j = 0; j < USE_AGENT; j++) {
-				log->log_in((float) sumP(i));
-				log->log_pause();
-			}
 			sum = -(kp * sumP) - (kv * sumV);
 			u.col(id) = sum;
         }

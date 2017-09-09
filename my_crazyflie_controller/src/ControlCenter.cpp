@@ -15,12 +15,39 @@ int main(int argc, char ** argv) {
 	ros::init(argc, argv, "ControlCenter");
 	ros::NodeHandle n("~");
 	//这是拓扑结构
+#if USE_AGENT==1
+	int topologies[USE_AGENT][USE_AGENT]= {0};
+#elif USE_AGENT==2
+	int topologies[USE_AGENT][USE_AGENT]= {0,0,-1,1};
+#elif USE_AGENT==3
 	int topologies[USE_AGENT][USE_AGENT] = { { 0, 0, 0 }, { -1, 1, 0 }, { 0, -1,
 			1 } };
+#elif USE_AGENT==4
+	int topologies[USE_AGENT][USE_AGENT] = { {0, 0, 0, 0}, {-1, 1, 0, 0}, {
+			0, -1, 1, 0}, {0, 0, -1, 1}};
+#elif USE_AGENT==5
+	int topologies[USE_AGENT][USE_AGENT] = { {0, 0, 0, 0, 0},
+		{	-1, 1, 0, 0, 0}, {0, -1, 1, 0, 0}, {0, 0, -1, 1, 0}, {0, 0,
+			0, -1, 1}};
+#elif USE_AGENT==6
+	int topologies[USE_AGENT][USE_AGENT] = { {0, 0, 0, 0, 0, 0}, {-1, 1, 0,
+			0, 0, 0}, {0, -1, 1, 0, 0, 0}, {0, 0, -1, 1, 0, 0}, {0, 0, 0,
+			-1, 1, 0}, {0, 0, 0, 0, -1, 1}};
+#elif USE_AGENT==7
+	int topologies[USE_AGENT][USE_AGENT] = { { 0, 0, 0, 0, 0, 0, 0 }, { -1, 1,
+			0, 0, 0, 0, 0 }, { 0, -1, 1, 0, 0, 0, 0 }, { 0, 0, -1, 1, 0, 0, 0 },
+			{ 0, 0, 0, -1, 1, 0, 0 }, { 0, 0, 0, 0, -1, 1, 0 }, { 0, 0, 0, 0, 0,
+					-1, 1 } };
+#endif
 	int frame_ids[USE_AGENT];
-#if USE_AGENT>=3
+
+#if USE_AGENT>=1
 	n.getParam("frame_id_1", frame_ids[0]);
+#endif
+#if USE_AGENT>=2
 	n.getParam("frame_id_2", frame_ids[1]);
+#endif
+#if USE_AGENT>=3
 	n.getParam("frame_id_3", frame_ids[2]);
 #endif
 #if USE_AGENT>=4

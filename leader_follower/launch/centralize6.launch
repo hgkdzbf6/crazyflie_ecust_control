@@ -1,0 +1,343 @@
+<?xml version="1.0"?>
+ <!-- roslaunch leader_follower centralize6.launch -->
+ <!-- 若想正常启动，需要正确连接的硬件设备有：-->
+ <!-- 1-3 crazyradio-->
+ <!-- 3 crazyflie-->
+ <!-- 网线，连接vicon的-->
+ <!-- 手柄-->
+
+<!-- 注意，如果要扩展飞机的数量的话，请更改以下几个地方：-->
+<!-- 1、common.hpp里面的USE_AGENT的宏定义，并重新编译-->
+<!-- 2、按照你的意愿，更改GoalControl的值。-->
+<!-- 3、根据控制性能的好坏，来决定是否用更多的crazyradio-->
+
+
+<launch>
+<!-- 手柄参数-->
+  <arg name="joy_dev" default="/dev/input/js0" />
+  <!-- 飞机的地址，以及坐标系-->
+  <arg name="name1" default="agent0"/>
+  <arg name="frame_id_1" default="1"/>
+  <arg name="uri1" default="radio://0/100/2M/E7E7E7E701" />
+  <arg name="frame1" default="/vicon/C1/C1" />
+
+  <arg name="name2" default="agent1"/>
+  <arg name="frame_id_2" default="2"/>
+  <arg name="uri2" default="radio://0/100/2M/E7E7E7E702" />
+  <arg name="frame2" default="/vicon/C2/C2" />
+
+  <arg name="name3" default="agent2"/>
+  <arg name="frame_id_3" default="3"/>
+  <arg name="uri3" default="radio://1/100/2M/E7E7E7E703" />
+  <arg name="frame3" default="/vicon/C3/C3" />
+  
+  <arg name="name4" default="agent3"/>
+  <arg name="frame_id_4" default="4"/>
+  <arg name="uri4" default="radio://1/100/2M/E7E7E7E704" />
+  <arg name="frame4" default="/vicon/C4/C4" />
+  
+  <arg name="name5" default="agent4"/>
+  <arg name="frame_id_5" default="5"/>
+  <arg name="uri5" default="radio://2/100/2M/E7E7E7E705" />
+  <arg name="frame5" default="/vicon/C5/C5" />
+  
+  <arg name="name6" default="agent5"/>
+  <arg name="frame_id_6" default="6"/>
+  <arg name="uri6" default="radio://2/100/2M/E7E7E7E706" />
+  <arg name="frame6" default="/vicon/C6/C6" />
+
+
+  <arg name="stick_frame" default="/vicon/G1/G1" />
+
+  <arg name="worldFrame" default="/world" />
+  <!-- 启动管理器-->
+  <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch">
+  </include>
+  <!-- 启动手柄节点-->
+  <node name="joy" pkg="joy" type="joy_node" output="screen">
+    <param name="dev" value="$(arg joy_dev)" />
+  </node>
+
+<!--还需要有manager.py节点来管理以下三个节点。-->
+ <node name="joy_goal" pkg="leader_follower" type="JoyGoal.py" output="screen">
+ </node>
+
+
+  <!--<node name="stickGoal" pkg="leader_follower" type="StickGoal.py" output="screen">
+    <param name="stickFrame" value="$(arg stick_frame)" />
+  </node>-->
+
+
+
+<!--启动中心化控制节点，负责接受信息吧-->
+<node name="GoalCenter" pkg="my_crazyflie_controller" type="GoalCenter" output="screen">
+    <param name="frame_id_1" value="$(arg frame_id_1)"/>
+    <param name="frame_id_2" value="$(arg frame_id_2)"/>
+    <param name="frame_id_3" value="$(arg frame_id_3)"/>
+    <param name="frame_id_4" value="$(arg frame_id_4)"/>
+    <param name="frame_id_5" value="$(arg frame_id_5)"/>
+    <param name="frame_id_6" value="$(arg frame_id_6)"/>
+</node>
+
+<node name="ControlCenter" pkg="my_crazyflie_controller" type="ControlCenter" output="screen" >
+    <param name="frame_id_1" value="$(arg frame_id_1)"/>
+    <param name="frame_id_2" value="$(arg frame_id_2)"/>
+    <param name="frame_id_3" value="$(arg frame_id_3)"/>
+    <param name="frame_id_4" value="$(arg frame_id_4)"/>
+    <param name="frame_id_5" value="$(arg frame_id_5)"/>
+    <param name="frame_id_6" value="$(arg frame_id_6)"/>
+</node>
+
+<!-- leader组可以由这么几个东西组成吧-->
+  <group ns="$(arg name1)">
+  <!-- 添加飞机的参数控制，主要控制需要发送给飞机哪些参数吧-->
+    <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri1)" />
+      <arg name="tf_prefix" value="$(arg name1)" />
+      <arg name="enable_logging" value="False" />
+    </include>
+<!--飞机的控制器吧，替换成自己的normal控制器-->
+<!--原来的是joystack_controller,也就是手柄的控制直接映射到每一个服务吧。-->
+<!--现在是想用manager来发送指令，然后让normal来执行相应的动作-->
+    <!--<node name="pose" pkg="leader_follower" type="normal.py" output="screen">
+      <param name="leaderFrame" value="/joy_goal" />
+      <param name="frame" value="$(arg frame1)" />
+    </node>-->
+
+<!-- 接受手柄的消息，并做出相应的动作，其实就是执行相应的服务，是c++
+    写的，觉得没必要这么写这个launch文件，直接吧这个文件拿出来就好了，日后再改
+    controller.cpp 文件，发送msg，然后给crazyflie_server吧 -->
+    <node name="SingleAgent" pkg="my_crazyflie_controller" type="SingleAgent" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+      <param name="world" value="$(arg worldFrame)" />
+      <param name="id" value="0" />
+      <param name="frame_id" value="$(arg frame_id_1)" />
+      <param name="name" value="$(arg name1)" />
+      <param name="internal_u" value="True" />
+      </node>
+
+<!-- 目标位置的消息的生成-->
+    <!--<node name="pose" pkg="leader_follower" type="pose.py" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+      <param name="leaderFrame" value=""/>
+      <param name="height" value="1" />
+    </node>-->
+
+    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" 
+    args="0 0 0 0 0 0 1 $(arg frame1) /$(arg name1)/base_link 100" />
+  
+  </group>
+
+
+<!-- follower1组可以由这么几个东西组成吧-->
+  <group ns="$(arg name2)">
+  <!-- 添加飞机的参数控制，主要控制需要发送给飞机哪些参数吧-->
+    <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri2)" />
+      <arg name="tf_prefix" value="$(arg name2)" />
+      <arg name="enable_logging" value="False" />
+    </include>
+<!--飞机的控制器吧，替换成自己的normal控制器-->
+<!--原来的是joystack_controller,也就是手柄的控制直接映射到每一个服务吧。-->
+<!--现在是想用manager来发送指令，然后让normal来执行相应的动作-->
+    <!--<node name="pose" pkg="leader_follower" type="normal.py" output="screen">
+      <param name="leaderFrame" value="$(arg frame1)" />
+      <param name="frame" value="$(arg frame2)" />
+      <param name="offsetX" value="0.5" />
+    </node>-->
+<!-- 接受手柄的消息，并做出相应的动作，其实就是执行相应的服务，是c++
+    写的，觉得没必要这么写这个launch文件，直接吧这个文件拿出来就好了，日后再改
+    controller.cpp 文件，发送msg，然后给crazyflie_server吧 -->
+
+    <node name="SingleAgent" pkg="my_crazyflie_controller" type="SingleAgent" output="screen">
+      <param name="frame" value="$(arg frame2)" />
+      <param name="world" value="$(arg worldFrame)" />
+      <param name="id" value="1" />
+      <param name="frame_id" value="$(arg frame_id_2)" />
+      <param name="name" value="$(arg name2)" />
+      <param name="internal_u" value="False" />
+   </node>
+
+
+<!-- 目标位置的消息的生成-->
+    <!--<node name="pose" pkg="leader_follower" type="pose.py" output="screen">
+      <param name="frame" value="$(arg frame2)" />
+      <param name="leaderFrame" value=""/>
+      <param name="height" value="1.1" />
+    </node>-->
+
+        <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" 
+    args="0 0 0 0 0 0 1 $(arg frame2) /$(arg name2)/base_link 100" />
+  </group>
+
+
+  <!-- follower2组可以由这么几个东西组成吧-->
+  <group ns="$(arg name3)">
+  <!-- 添加飞机的参数控制，主要控制需要发送给飞机哪些参数吧-->
+    <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri3)" />
+      <arg name="tf_prefix" value="$(arg name3)" />
+      <arg name="enable_logging" value="False" />
+    </include>
+<!--飞机的控制器吧，替换成自己的normal控制器-->
+<!--原来的是joystack_controller,也就是手柄的控制直接映射到每一个服务吧。-->
+<!--现在是想用manager来发送指令，然后让normal来执行相应的动作-->
+    <!--<node name="pose" pkg="leader_follower" type="normal.py" output="screen">
+      <param name="leaderFrame" value="$(arg frame2)" />
+      <param name="frame" value="$(arg frame3)" />
+      <param name="offsetX" value="0.5" />
+    </node>-->
+<!-- 接受手柄的消息，并做出相应的动作，其实就是执行相应的服务，是c++
+    写的，觉得没必要这么写这个launch文件，直接吧这个文件拿出来就好了，日后再改
+    controller.cpp 文件，发送msg，然后给crazyflie_server吧 -->
+    <node name="SingleAgent" pkg="my_crazyflie_controller" type="SingleAgent" output="screen">
+      <param name="frame" value="$(arg frame3)" />
+      <param name="world" value="$(arg worldFrame)" />
+      <param name="id" value="2" />
+      <param name="frame_id" value="$(arg frame_id_3)" />
+      <param name="name" value="$(arg name3)" />
+      <param name="internal_u" value="False" />
+   </node>
+<!-- 目标位置的消息的生成-->
+    <!--<node name="pose" pkg="leader_follower" type="pose.py" output="screen">
+      <param name="frame" value="$(arg frame3)" />
+      <param name="leaderFrame" value=""/>
+      <param name="height" value="1.3" />
+    </node>-->
+
+    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" 
+    args="0 0 0 0 0 0 1 $(arg frame3) /$(arg name3)/base_link 100" />
+  </group>
+
+
+  <!-- leader组可以由这么几个东西组成吧-->
+  <group ns="$(arg name4)">
+  <!-- 添加飞机的参数控制，主要控制需要发送给飞机哪些参数吧-->
+    <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri4)" />
+      <arg name="tf_prefix" value="$(arg name4)" />
+      <arg name="enable_logging" value="False" />
+    </include>
+<!--飞机的控制器吧，替换成自己的normal控制器-->
+<!--原来的是joystack_controller,也就是手柄的控制直接映射到每一个服务吧。-->
+<!--现在是想用manager来发送指令，然后让normal来执行相应的动作-->
+    <!--<node name="pose" pkg="leader_follower" type="normal.py" output="screen">
+      <param name="leaderFrame" value="/joy_goal" />
+      <param name="frame" value="$(arg frame1)" />
+    </node>-->
+
+<!-- 接受手柄的消息，并做出相应的动作，其实就是执行相应的服务，是c++
+    写的，觉得没必要这么写这个launch文件，直接吧这个文件拿出来就好了，日后再改
+    controller.cpp 文件，发送msg，然后给crazyflie_server吧 -->
+    <node name="SingleAgent" pkg="my_crazyflie_controller" type="SingleAgent" output="screen">
+      <param name="frame" value="$(arg frame4)" />
+      <param name="world" value="$(arg worldFrame)" />
+      <param name="id" value="3" />
+      <param name="frame_id" value="$(arg frame_id_4)" />
+      <param name="name" value="$(arg name4)" />
+      <param name="internal_u" value="True" />
+      </node>
+
+<!-- 目标位置的消息的生成-->
+    <!--<node name="pose" pkg="leader_follower" type="pose.py" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+      <param name="leaderFrame" value=""/>
+      <param name="height" value="1" />
+    </node>-->
+
+    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" 
+    args="0 0 0 0 0 0 1 $(arg frame4) /$(arg name4)/base_link 100" />
+  
+  </group>
+
+  <!-- leader组可以由这么几个东西组成吧-->
+  <group ns="$(arg name5)">
+  <!-- 添加飞机的参数控制，主要控制需要发送给飞机哪些参数吧-->
+    <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri5)" />
+      <arg name="tf_prefix" value="$(arg name5)" />
+      <arg name="enable_logging" value="False" />
+    </include>
+<!--飞机的控制器吧，替换成自己的normal控制器-->
+<!--原来的是joystack_controller,也就是手柄的控制直接映射到每一个服务吧。-->
+<!--现在是想用manager来发送指令，然后让normal来执行相应的动作-->
+    <!--<node name="pose" pkg="leader_follower" type="normal.py" output="screen">
+      <param name="leaderFrame" value="/joy_goal" />
+      <param name="frame" value="$(arg frame1)" />
+    </node>-->
+
+<!-- 接受手柄的消息，并做出相应的动作，其实就是执行相应的服务，是c++
+    写的，觉得没必要这么写这个launch文件，直接吧这个文件拿出来就好了，日后再改
+    controller.cpp 文件，发送msg，然后给crazyflie_server吧 -->
+    <node name="SingleAgent" pkg="my_crazyflie_controller" type="SingleAgent" output="screen">
+      <param name="frame" value="$(arg frame5)" />
+      <param name="world" value="$(arg worldFrame)" />
+      <param name="id" value="4" />
+      <param name="frame_id" value="$(arg frame_id_5)" />
+      <param name="name" value="$(arg name5)" />
+      <param name="internal_u" value="True" />
+      </node>
+
+<!-- 目标位置的消息的生成-->
+    <!--<node name="pose" pkg="leader_follower" type="pose.py" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+      <param name="leaderFrame" value=""/>
+      <param name="height" value="1" />
+    </node>-->
+
+    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" 
+    args="0 0 0 0 0 0 1 $(arg frame5) /$(arg name5)/base_link 100" />
+  
+  </group>
+
+
+  <!-- leader组可以由这么几个东西组成吧-->
+  <group ns="$(arg name6)">
+  <!-- 添加飞机的参数控制，主要控制需要发送给飞机哪些参数吧-->
+    <include file="$(find my_crazyflie_driver)/launch/my_crazyflie_add.launch">
+      <arg name="uri" value="$(arg uri6)" />
+      <arg name="tf_prefix" value="$(arg name6)" />
+      <arg name="enable_logging" value="False" />
+    </include>
+<!--飞机的控制器吧，替换成自己的normal控制器-->
+<!--原来的是joystack_controller,也就是手柄的控制直接映射到每一个服务吧。-->
+<!--现在是想用manager来发送指令，然后让normal来执行相应的动作-->
+    <!--<node name="pose" pkg="leader_follower" type="normal.py" output="screen">
+      <param name="leaderFrame" value="/joy_goal" />
+      <param name="frame" value="$(arg frame1)" />
+    </node>-->
+
+<!-- 接受手柄的消息，并做出相应的动作，其实就是执行相应的服务，是c++
+    写的，觉得没必要这么写这个launch文件，直接吧这个文件拿出来就好了，日后再改
+    controller.cpp 文件，发送msg，然后给crazyflie_server吧 -->
+    <node name="SingleAgent" pkg="my_crazyflie_controller" type="SingleAgent" output="screen">
+      <param name="frame" value="$(arg frame6)" />
+      <param name="world" value="$(arg worldFrame)" />
+      <param name="id" value="5" />
+      <param name="frame_id" value="$(arg frame_id_6)" />
+      <param name="name" value="$(arg name6)" />
+      <param name="internal_u" value="True" />
+      </node>
+
+<!-- 目标位置的消息的生成-->
+    <!--<node name="pose" pkg="leader_follower" type="pose.py" output="screen">
+      <param name="frame" value="$(arg frame1)" />
+      <param name="leaderFrame" value=""/>
+      <param name="height" value="1" />
+    </node>-->
+
+    <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" 
+    args="0 0 0 0 0 0 1 $(arg frame5) /$(arg name5)/base_link 100" />
+  
+  </group>
+
+
+  <!-- 运行 vicon bridge -->
+  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+
+  <!-- run rviz -->
+  <!--第一个是那个飞机的形状吧-->
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find leader_follower)/launch/centralize.rviz" required="true" />
+
+</launch>
