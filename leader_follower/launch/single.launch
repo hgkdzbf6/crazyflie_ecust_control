@@ -11,9 +11,9 @@
   <arg name="joy_dev" default="/dev/input/js0" />
   <!-- 飞机的地址，以及坐标系-->
   <arg name="name1" default="agent0"/>
-  <arg name="frame_id_1" default="3"/>
-  <arg name="uri1" default="radio://0/100/2M/E7E7E7E703" />
-  <arg name="frame1" default="/vicon/C3/C3" />
+  <arg name="frame_id_1" default="6"/>
+  <arg name="uri1" default="radio://0/100/2M/E7E7E7E706" />
+  <arg name="frame1" default="/vicon/C6/C6" />
 
   <arg name="worldFrame" default="/world" />
   <arg name="stick_frame" default="/vicon/G1/G1"/>
@@ -76,13 +76,13 @@
 
 
 <!--还需要有manager.py节点来管理以下三个节点。-->
- <!--<node name="joy_goal" pkg="leader_follower" type="JoyGoal.py" output="screen">
- </node>-->
+ <node name="joy_goal" pkg="leader_follower" type="JoyGoal.py" output="screen">
+ </node>
 
 
-  <node name="stickGoal" pkg="leader_follower" type="StickGoal.py" output="screen">
+  <!--<node name="stickGoal" pkg="leader_follower" type="StickGoal.py" output="screen">
     <param name="stickFrame" value="$(arg stick_frame)" />
-  </node>
+  </node>-->
 
   <!-- 运行 vicon bridge -->
   <include file="$(find vicon_bridge)/launch/vicon.launch"/>

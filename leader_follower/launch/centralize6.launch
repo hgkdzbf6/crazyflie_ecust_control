@@ -1,10 +1,12 @@
 <?xml version="1.0"?>
- <!-- roslaunch leader_follower centralize6.launch -->
- <!-- 若想正常启动，需要正确连接的硬件设备有：-->
- <!-- 1-3 crazyradio-->
- <!-- 3 crazyflie-->
- <!-- 网线，连接vicon的-->
- <!-- 手柄-->
+
+
+<!-- roslaunch leader_follower centralize6.launch -->
+<!-- 若想正常启动，需要正确连接的硬件设备有：-->
+<!-- 1-3 crazyradio-->
+<!-- 3 crazyflie-->
+<!-- 网线，连接vicon的-->
+<!-- 手柄-->
 
 <!-- 注意，如果要扩展飞机的数量的话，请更改以下几个地方：-->
 <!-- 1、common.hpp里面的USE_AGENT的宏定义，并重新编译-->
@@ -37,9 +39,9 @@
   <arg name="frame4" default="/vicon/C4/C4" />
   
   <arg name="name5" default="agent4"/>
-  <arg name="frame_id_5" default="5"/>
-  <arg name="uri5" default="radio://2/100/2M/E7E7E7E705" />
-  <arg name="frame5" default="/vicon/C5/C5" />
+  <arg name="frame_id_5" default="7"/>
+  <arg name="uri5" default="radio://2/100/2M/E7E7E7E707" />
+  <arg name="frame5" default="/vicon/C7/C7" />
   
   <arg name="name6" default="agent5"/>
   <arg name="frame_id_6" default="6"/>

@@ -40,9 +40,10 @@ public:
 					name), thrust(0), startZ(0), m_pidYaw(-200, -20, 0, -200,
 					200, 0, 0, "yaw"), m_pidX(33, 33, 0.8, -10, 10, -0.5, 0.5,
 					"x"), m_pidY(-33, -33, -0.8, -10, 10, -0.5, 0.5, "y"), m_pidZ(
-					6200, 7500, 1500, 10000, 60000, -2000, 2000, "z")
+					6200, 7500, 1500, 10000, 60000, -2000, 2000, "z"), land_flag(
+					false)
 
-					, m_kp(0.187), m_ki(0.013), m_kd(0.107), m_mass(0.033), m_massThrust(
+					, m_kp(0.187), m_ki(0.009), m_kd(0.103), m_mass(0.034), m_massThrust(
 					150000), m_roll(0), m_pitch(0), m_yaw(0), m_maxAngle(0.4) {
 		//每个不同的飞机有不同的命名空间
 		ros::NodeHandle nh("~");
@@ -88,10 +89,10 @@ public:
 		ros::Timer timer2 = node.createTimer(ros::Duration(1.0 / frequency),
 				&SingleAgent::broadcast_pos_and_vel, this);
 		ros::spin();
-
 	}
 private:
 	bool internal_u_flag;
+	bool land_flag;
 	int agent_id;
 	int frame_id;
 	std::string m_worldFrame;
@@ -226,7 +227,7 @@ private:
 	        std_srvs::Empty::Response& res)
 	{
         ROS_INFO("Takeoff requested!");
-        state=TakingOff;
+		state = TakingOff;
         tf::StampedTransform transform;
         listener.lookupTransform(m_worldFrame, m_agentFrame, ros::Time(0), transform);
         startZ = transform.getOrigin().z();
@@ -264,7 +265,6 @@ private:
 		u(2) = req.response.u[2];
 	}
 
-
     void iteration(const ros::TimerEvent& e){
 		tf::StampedTransform transform;
 		geometry_msgs::Twist msg;
@@ -279,7 +279,7 @@ private:
     		listener.lookupTransform(m_worldFrame
     				,m_agentFrame,
     				ros::Time(0),transform);
-            if (transform.getOrigin().z() > startZ + 0.05
+			if (transform.getOrigin().z() > startZ + 0.05
             		|| thrust > 50000)
             {
 				pidReset();
@@ -289,7 +289,7 @@ private:
             }
             else
             {
-            	thrust += 10000 * dt;
+				thrust += 50000 * dt;
                 //一开始飘的原因是因为只是控制了thrust，没有
                 //控制位置
                 msg.linear.z = thrust;
@@ -301,14 +301,189 @@ private:
 			posGoalMsg.pose.position.z = startZ + 0.05;
             listener.lookupTransform(m_worldFrame
             		, m_agentFrame, ros::Time(0), transform);
+			land_flag = true;
             if (transform.getOrigin().z() <= startZ + 0.05) {
                 state = Idle;
+				land_flag = false;
 				cmdPub.publish(empty_msg);
             }
     	}
+		case AnotherController: {
+			static int thrust_negetive_flag = 50;
+			tf::StampedTransform tf_transform;
+			listener.lookupTransform(m_worldFrame, m_agentFrame, ros::Time(0),
+					tf_transform);
+
+			// CURRENT STATES
+			Eigen::Affine3d transform;
+			tf::transformTFToEigen(tf_transform, transform);
+
+			// Current position
+			Eigen::Vector3d current_position = transform.translation();
+
+			// Current velocity
+			Eigen::Vector3d current_velocity =
+					(current_position - m_oldPosition) / dt;
+			m_oldPosition = current_position;
+
+			// Current Orientation
+			// see m_roll, m_pitch, m_yaw
+
+			// Current angular velocity
+			//Eigen::Vector3d current_angular_velocity(
+			//    m_imu.angular_velocity.x,
+			//    m_imu.angular_velocity.y,
+			//    m_imu.angular_velocity.z
+			//);
+
+			//DESIRED STATES
+			//这个是个消息，包含了很多消息，位置，速度和加速度都有
+			//但是我的消息是有位置和速度的， 暂时先不加加速度咋样
+			//？嗯对就这么办
+			//crazyflie_controller::QuadcopterTrajectoryPoint trajectoryPoint;
+			//getCurrentTrajectoryPoint(trajectoryPoint);
+
+			// Desired position
+			Eigen::Vector3d target_position(posGoalMsg.pose.position.x,
+					posGoalMsg.pose.position.y, posGoalMsg.pose.position.z);
+			if (land_flag)
+				target_position(2) = 0;
+
+			//Desired velocity
+			Eigen::Vector3d target_velocity(velGoalMsg.pose.position.x,
+					velGoalMsg.pose.position.y, velGoalMsg.pose.position.z);
+
+			//Desired acceleration
+			Eigen::Vector3d target_acceleration(accGoalMsg.pose.position.x,
+					accGoalMsg.pose.position.y, accGoalMsg.pose.position.z);
+
+			//Desired yaw
+			//double target_yaw = trajectoryPoint.yaw;
+			double target_yaw = 0;
+
+			// set this to 0 because we don't want to rotate during the flight
+			Eigen::Vector3d target_angular_velocity(0, 0, 0);
+
+			//CALCULATE THRUST
+
+			static double cummulate_error = 0;
+			static double xianfu = 9;
+			// Position Error
+			Eigen::Vector3d current_r_error = target_position
+					- current_position;
+//			if (frame_id == 7) {
+//				xianfu = 5;
+//			} else if (frame_id == 4) {
+//				xianfu = 3;
+//			} else {
+//				xianfu = 1;
+//			}
+
+			// Velocity Error
+			Eigen::Vector3d current_v_error = target_velocity
+					- current_velocity;
+
+			cummulate_error = cummulate_error + current_r_error(2);
+			cummulate_error = zbf::constraind((double) cummulate_error, xianfu,
+					-xianfu);
+			// Desired thrust
+			Eigen::Vector3d target_thrust = m_kp * current_r_error
+					+ m_kd * current_v_error + m_mass * target_acceleration
+					+ m_mass * Eigen::Vector3d(0, 0, 9.81);
+			log->log_in((float) target_position(0));
+			log->log_pause();
+			log->log_in((float) target_position(1));
+			log->log_pause();
+			log->log_in((float) target_position(2));
+			log->log_pause();
+			log->log_in((float) current_position(0));
+			log->log_pause();
+			log->log_in((float) current_position(1));
+			log->log_pause();
+			log->log_in((float) current_position(2));
+			log->log_pause();
+			log->log_in((float) target_velocity(0));
+			log->log_pause();
+			log->log_in((float) target_velocity(1));
+			log->log_pause();
+			log->log_in((float) target_velocity(2));
+			log->log_pause();
+			log->log_in((float) current_velocity(0));
+			log->log_pause();
+			log->log_in((float) current_velocity(1));
+			log->log_pause();
+			log->log_in((float) current_velocity(2));
+			log->log_pause();
+			// Current z_axis
+			Eigen::Vector3d current_z_axis(-sin(m_pitch) * cos(m_roll),
+					sin(m_roll), cos(m_pitch) * cos(m_roll));
+			// Current thrust
+			double current_thrust = target_thrust.dot(current_z_axis)
+					* m_massThrust;
+
+			// CALCULATE AXIS
+			// // Desired z_axis
+			Eigen::Vector3d z_axis_desired = target_thrust
+					/ target_thrust.norm();
+			// // Desired x_center_axis
+			// Eigen::Vector3d x_center_axis_desired = Eigen::Vector3d(sin(target_yaw), cos(target_yaw), 0);
+			// // Desired y_axis
+			// Eigen::Vector3d y_axis_desired = z_axis_desired.cross(x_center_axis_desired);
+			// // Desired x_axis
+			// Eigen::Vector3d x_axis_desired = y_axis_desired.cross(z_axis_desired);
+
+			Eigen::Vector3d x_axis_desired = z_axis_desired.cross(
+					Eigen::Vector3d(sin(target_yaw), cos(target_yaw), 0));
+			//x_axis_desired.normalize();
+			Eigen::Vector3d y_axis_desired = z_axis_desired.cross(
+					x_axis_desired);
+
+			// CONTROL
+
+			tfScalar current_euler_roll, current_euler_pitch, current_euler_yaw;
+			tf::Matrix3x3(tf_transform.getRotation()).getRPY(current_euler_roll,
+					current_euler_pitch, current_euler_yaw);
+
+			double thrust = current_thrust; //z_axis_desired.dot(current_z_axis);
+			if (abs(current_r_error(2)) < 0.35) {
+				thrust = thrust + cummulate_error * m_ki * m_massThrust;
+			} else {
+				cummulate_error = 0;
+			}
+			if (thrust < 0) {
+				thrust = 0;
+				thrust_negetive_flag--;
+			}
+			if (thrust_negetive_flag < 0) {
+				state = Idle;
+			}
+
+
+			if (thrust > 65535) {
+				thrust = 65535;
+				thrust_negetive_flag = 50;
+			}
+
+			double pitch_angle = asin(x_axis_desired(2)) * 180.0 / M_PI;
+			double yaw_angle = target_yaw;
+			// double yaw_angle = atan2(x_axis_desired.getY(), x_axis_desired.getX());
+			double roll_angle = atan2(y_axis_desired(2), z_axis_desired(2))
+					* 180.0 / M_PI;
+
+			geometry_msgs::Twist msg;
+			msg.linear.x = zbf::constrainf(pitch_angle, 10.0, -10.0);
+			msg.linear.y = zbf::constrainf(-roll_angle, 10.0, -10.0);
+//			msg.linear.x = pitch_angle;
+//			msg.linear.y = -roll_angle;
+			msg.linear.z = thrust;
+			msg.angular.z = m_pidYaw.update(current_euler_yaw, yaw_angle);
+			cmdPub.publish(msg);
+			log->log_end();
+		}
+			break;
 			//注意，这里没有break,也就是说x和y方向还是受控的
-    	//问题：landing有一个transform，
-		//automatic也有一个transform，这两个不会冲突吗？
+			//问题：landing有一个transform，
+			//automatic也有一个transform，这两个不会冲突吗？
     	case Automatic:
 			req.request.id = this->agent_id;
 			if (uClient.call(req)) {
@@ -401,39 +576,6 @@ private:
 //					std::cout << "agent" << agent_id << " output:  ["
 //							<< msg.linear.x << "," << msg.linear.y << ","
 //							<< msg.linear.z << "]" << std::endl;
-					if (agent_id == 0) {
-						log->log_in((float) targetWorld.pose.position.x);
-						log->log_pause();
-						log->log_in((float) targetWorld.pose.position.y);
-						log->log_pause();
-						log->log_in((float) targetWorld.pose.position.z);
-						log->log_pause();
-						log->log_in((float) targetDrone.pose.position.x);
-						log->log_pause();
-						log->log_in((float) targetDrone.pose.position.y);
-						log->log_pause();
-						log->log_in((float) targetDrone.pose.position.z);
-						log->log_pause();
-					} else {
-						log->log_in((float) targetDrone.pose.position.x);
-						log->log_pause();
-						log->log_in((float) targetDrone.pose.position.y);
-						log->log_pause();
-						log->log_in((float) targetDrone.pose.position.z);
-						log->log_pause();
-						log->log_in((float) u(0));
-						log->log_pause();
-						log->log_in((float) u(1));
-						log->log_pause();
-						log->log_in((float) u(2));
-						log->log_pause();
-					}
-					log->log_in((float) msg.linear.x);
-					log->log_pause();
-					log->log_in((float) msg.linear.y);
-					log->log_pause();
-					log->log_in((float) msg.linear.z);
-					log->log_end();
 					msg.angular.z = m_pidYaw.update(0.0f, yaw);
 					cmdPub.publish(msg);
 				} catch (tf::TransformException & ex) {
@@ -446,126 +588,6 @@ private:
 					state = Idle;
 				}
 			}
-			break;
-		case AnotherController:
-		{
-			tf::StampedTransform tf_transform;
-			listener.lookupTransform(m_worldFrame, m_agentFrame, ros::Time(0),
-					tf_transform);
-
-			// CURRENT STATES
-			Eigen::Affine3d transform;
-			tf::transformTFToEigen(tf_transform, transform);
-
-			// Current position
-			Eigen::Vector3d current_position = transform.translation();
-
-			// Current velocity
-			Eigen::Vector3d current_velocity =
-					(current_position - m_oldPosition) / dt;
-			m_oldPosition = current_position;
-
-			// Current Orientation
-			// see m_roll, m_pitch, m_yaw
-
-			// Current angular velocity
-			//Eigen::Vector3d current_angular_velocity(
-			//    m_imu.angular_velocity.x,
-			//    m_imu.angular_velocity.y,
-			//    m_imu.angular_velocity.z
-			//);
-
-			//DESIRED STATES
-			//这个是个消息，包含了很多消息，位置，速度和加速度都有
-			//但是我的消息是有位置和速度的， 暂时先不加加速度咋样
-			//？嗯对就这么办
-			//crazyflie_controller::QuadcopterTrajectoryPoint trajectoryPoint;
-			//getCurrentTrajectoryPoint(trajectoryPoint);
-
-			// Desired position
-			Eigen::Vector3d target_position(posGoalMsg.pose.position.x,
-					posGoalMsg.pose.position.y, posGoalMsg.pose.position.z);
-
-			//Desired velocity
-			Eigen::Vector3d target_velocity(velGoalMsg.pose.position.x,
-					velGoalMsg.pose.position.y, velGoalMsg.pose.position.z);
-
-			//Desired acceleration
-			Eigen::Vector3d target_acceleration(accGoalMsg.pose.position.x,
-					accGoalMsg.pose.position.y, accGoalMsg.pose.position.z);
-
-			//Desired yaw
-			//double target_yaw = trajectoryPoint.yaw;
-			double target_yaw = 0;
-
-			// set this to 0 because we don't want to rotate during the flight
-			Eigen::Vector3d target_angular_velocity(0, 0, 0);
-
-			//CALCULATE THRUST
-
-			// Position Error
-			Eigen::Vector3d current_r_error = target_position
-					- current_position;
-			// Velocity Error
-			Eigen::Vector3d current_v_error = target_velocity
-					- current_velocity;
-			// Desired thrust
-			Eigen::Vector3d target_thrust = m_kp * current_r_error
-					+ m_kd * current_v_error + m_mass * target_acceleration
-					+ m_mass * Eigen::Vector3d(0, 0, 9.81);
-			// Current z_axis
-			Eigen::Vector3d current_z_axis(-sin(m_pitch) * cos(m_roll),
-					sin(m_roll), cos(m_pitch) * cos(m_roll));
-			// Current thrust
-			double current_thrust = target_thrust.dot(current_z_axis)
-					* m_massThrust;
-			ROS_INFO("%f,%f", current_thrust, current_position(2));
-
-			// CALCULATE AXIS
-			// // Desired z_axis
-			Eigen::Vector3d z_axis_desired = target_thrust
-					/ target_thrust.norm();
-			// // Desired x_center_axis
-			// Eigen::Vector3d x_center_axis_desired = Eigen::Vector3d(sin(target_yaw), cos(target_yaw), 0);
-			// // Desired y_axis
-			// Eigen::Vector3d y_axis_desired = z_axis_desired.cross(x_center_axis_desired);
-			// // Desired x_axis
-			// Eigen::Vector3d x_axis_desired = y_axis_desired.cross(z_axis_desired);
-
-			Eigen::Vector3d x_axis_desired = z_axis_desired.cross(
-					Eigen::Vector3d(sin(target_yaw), cos(target_yaw), 0));
-			//x_axis_desired.normalize();
-			Eigen::Vector3d y_axis_desired = z_axis_desired.cross(
-					x_axis_desired);
-
-			// CONTROL
-
-			tfScalar current_euler_roll, current_euler_pitch, current_euler_yaw;
-			tf::Matrix3x3(tf_transform.getRotation()).getRPY(current_euler_roll,
-					current_euler_pitch, current_euler_yaw);
-
-			double thrust = current_thrust; //z_axis_desired.dot(current_z_axis);
-			if (thrust < 0) {
-				thrust = 0;
-			}
-			if (thrust > 65536) {
-				thrust = 65536;
-			}
-
-			double pitch_angle = asin(x_axis_desired(2)) * 180.0 / M_PI;
-			double yaw_angle = target_yaw;
-			// double yaw_angle = atan2(x_axis_desired.getY(), x_axis_desired.getX());
-			double roll_angle = atan2(y_axis_desired(2), z_axis_desired(2))
-					* 180.0 / M_PI;
-
-			geometry_msgs::Twist msg;
-			msg.linear.x = pitch_angle;
-			msg.linear.y = -roll_angle;
-			msg.linear.z = thrust;
-			msg.angular.z = m_pidYaw.update(current_euler_yaw, yaw_angle);
-			cmdPub.publish(msg);
-
-		}
 			break;
     	case Idle:
 			cmdPub.publish(empty_msg);

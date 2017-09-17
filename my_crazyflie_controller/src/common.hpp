@@ -111,6 +111,8 @@ typedef Matrix<float, USE_AGENT, 1> UVector;
 typedef Matrix<float, 3, USE_AGENT> PosMatrix;
 
 #define MY_PI 3.141592653589793238462643383279502884
+#define MY_SQRT_1_DIV_3 0.577350269189626
+#define MY_SQRT_2 1.414213562373095
 
 namespace zbf {
 
@@ -128,6 +130,14 @@ int constrain(int value, int max, int min) {
 
 float constrainf(float value, float max, float min) {
 	float ret = value;
+	if (ret > max)
+		ret = max;
+	if (ret < min)
+		ret = min;
+	return ret;
+}
+double constraind(double value, double max, double min) {
+	double ret = value;
 	if (ret > max)
 		ret = max;
 	if (ret < min)
@@ -205,6 +215,9 @@ const std::string center_str_acc_goal(const int id) {
 }
 const std::string center_str_vel_goal_no_id(const int id) {
 	return "/GoalCenter/" + str_vel_goal(id) + "_no_id";
+}
+const std::string center_str_acc_goal_no_id(const int id) {
+	return "/GoalCenter/" + str_acc_goal(id) + "_no_id";
 }
 const std::string center_str_pos_goal_no_id(const int id) {
 	return "/GoalCenter/" + str_pos_goal(id) + "_no_id";
@@ -297,22 +310,29 @@ struct V3 {
 		this->y = y;
 		this->z = z;
 	}
-	const V3 & operator +(const V3 & v) {
-		static V3 res;
+	const V3 operator +(const V3 & v) {
+		V3 res;
 		res.x = this->x + v.x;
 		res.y = this->y + v.y;
 		res.z = this->z + v.z;
 		return res;
 	}
-	const V3 & operator /(double v) {
-		static V3 res;
+	const V3 operator -(const V3 & v) {
+		V3 res;
+		res.x = this->x - v.x;
+		res.y = this->y - v.y;
+		res.z = this->z - v.z;
+		return res;
+	}
+	const V3 operator /(double v) {
+		V3 res;
 		res.x = this->x / v;
 		res.y = this->y / v;
 		res.z = this->z / v;
 		return res;
 	}
-	const V3 & operator *(double v) {
-		static V3 res;
+	const V3 operator *(double v) {
+		V3 res;
 		res.x = this->x * v;
 		res.y = this->y * v;
 		res.z = this->z * v;
@@ -335,7 +355,7 @@ struct V3 {
 	}
 };
 
-#define DATA_LENGTH 50
+#define DATA_LENGTH 6
 
 struct MyFilter {
 
@@ -343,7 +363,7 @@ struct MyFilter {
 	V3 output;
 	V3 & update(const V3 & input) {
 //		static const int weight[DATA_LENGTH] = { 1 };
-		static const int weight_len = 50;
+		static const int weight_len = DATA_LENGTH;
 		int i;
 		output = V3(0, 0, 0);
 		for (i = 0; i < DATA_LENGTH - 1; i++) {

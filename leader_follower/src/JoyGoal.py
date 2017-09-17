@@ -21,8 +21,8 @@ class JoyGoal():
         # 广播消息
         self.pubGoal = rospy.Publisher('joy_goal', PoseStamped, queue_size=1)
         # tf侦听器
-        self.x=0
-        self.y=0
+        self.x=-1
+        self.y=1
         self.z=1
         self.r=50
         self.yaw=0

@@ -24,6 +24,7 @@
 
 
 using namespace Eigen;
+//#define LOG_ENABLE
 
 //一起起飞点这个，否则注释掉就好
 #define FLY_TOGETHER
@@ -44,7 +45,9 @@ public:
 			state(zbf::Idle), srvCalled(0) {
 		ros::NodeHandle nh;
 		int i;
+#ifdef LOG_ENABLE
 		log = new LogUtils();
+#endif
 		std::string str_u;
 		std::string str_msg;
 		this->topologies = TopoMatrix::Zero();
@@ -192,7 +195,7 @@ public:
 		}
 	}
 private:
-
+#ifdef LOG_ENABLE
 	void record() {
 		int i, j;
 		for (i = 0; i < 3; i++) {
@@ -218,6 +221,7 @@ private:
 
 		log->log_end();
 	}
+#endif
 	void timer_callback(const ros::TimerEvent & e) {
 		ROS_INFO("timer callback called.");
 		if (srvCalled == zbf::Agent0_takeoff) {
@@ -330,7 +334,7 @@ private:
 			sum = -(kp * sumP) - (kv * sumV);
 			u.col(id) = sum;
         }
-		record();
+		//record();
 
 	}
 	int get_frame_id(const std::string str) {
@@ -381,7 +385,9 @@ private:
 		return true;
 	}
 private:
+#ifdef LOG_ENABLE
 	LogUtils* log;
+#endif
 	int srvCalled;
 	zbf::State state;
 	zbf::Formation formation;
