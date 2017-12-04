@@ -38,7 +38,7 @@ public:
 		if (!file.is_open()) {
 			file.open(filename, std::ios::in);
 		}
-		if (NULL == file)
+		if (!(file))
 			return (-errno);
 		string _strIn("");
 		while (getline(file, _strIn)) {

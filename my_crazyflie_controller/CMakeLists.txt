@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(my_crazyflie_controller)
 
 find_package(catkin REQUIRED COMPONENTS
+  roscpp
   message_generation
   std_msgs
   tf  
@@ -12,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 find_package(Eigen REQUIRED)
+
 
 add_message_files(FILES
   LeaderController.msg
@@ -73,6 +75,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES my_crazyflie_controller
   CATKIN_DEPENDS
+    roscpp
     message_runtime
     std_msgs
     tf
@@ -113,6 +116,9 @@ target_link_libraries(my_crazyflie_controller
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+
+
+
 add_executable(my_crazyflie_controller2
   src/controller2.cpp)
 target_link_libraries(my_crazyflie_controller2
@@ -136,6 +142,9 @@ add_executable(ControlCenter
 target_link_libraries(ControlCenter
   ${catkin_LIBRARIES}
 )
+
+
+
 
 
 ## Declare a C++ executable

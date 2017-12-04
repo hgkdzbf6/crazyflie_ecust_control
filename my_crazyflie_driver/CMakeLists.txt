@@ -8,10 +8,16 @@ project(my_crazyflie_driver)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  roscpp
   message_generation
   std_msgs
   tf
-  crazyflie_cpp)
+  crazyflie_driver
+  crazyflie_cpp
+)
+
+include_directories(${catkin_INCLUDE_DIRS}) 
+
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -72,7 +78,7 @@ target_link_libraries(my_crazyflie_driver
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
-#   DEPENDENCIES
+  #  DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
 
@@ -108,7 +114,7 @@ target_link_libraries(my_crazyflie_driver
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES my_crazyflie_driver
-#  CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 

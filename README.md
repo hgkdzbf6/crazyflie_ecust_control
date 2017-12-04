@@ -15,3 +15,7 @@ Crazyflie Ros platform for ecust
     - crazyradio pa的驱动下了没？好像用到libusb1.0什么的
 
 3. 然后就看报什么错了吧= 0，bug可在issue里提嘛～虽然我觉得不会有人的
+
+
+4. 可能会遇到报错AgentU.h：没有那个文件或者目录的
+这个应该是编译顺序有问题，应该先编译消息的。

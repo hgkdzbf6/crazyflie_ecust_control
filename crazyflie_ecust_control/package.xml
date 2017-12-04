@@ -21,6 +21,14 @@
   <!-- Example: -->
   <!-- <url type="website">http://wiki.ros.org/crazyflie_ecust</url> -->
 
+  <!-- <build_depend>hover_vicon</build_depend> 
+  <build_depend>waypoint_vicon</build_depend>
+  <build_depend>leader_follower</build_depend>
+  <build_depend>my_crazyflie_controller</build_depend>
+  <build_depend>my_crazyflie_driver</build_depend>
+  <build_depend>my_run</build_depend>
+  <build_depend>simple_control</build_depend>
+  <build_depend>crazyflie_ros</build_depend> -->
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
   <!-- Authors do not have to be maintainers, but could be -->
@@ -33,7 +41,7 @@
   <run_depend>my_crazyflie_driver</run_depend>
   <run_depend>my_run</run_depend>
   <run_depend>simple_control</run_depend>
-
+  <run_depend>crazyflie_ros</run_depend>
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
   <!-- Examples: -->
