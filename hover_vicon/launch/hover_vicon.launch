@@ -2,8 +2,8 @@
 <!-- roslaunch hover_vicon hover_vicon.launch-->
 <launch>
   <!--输入参数，基本也应该不变吧-->
-  <arg name="uri" default="radio://0/100/2M/E7E7E7E704" />
-  <arg name="frame" default="/vicon/C4/C4" />  
+  <arg name="uri" default="radio://0/100/2M/E7E7E7E701" />
+  <arg name="frame" default="/vicon/C1/C1" />  
   <!-- <arg name="uri" default="radio://0/100/250K/E7E7E7E701" />
   <arg name="frame" default="/vicon/C1/C1" />-->
   <arg name="joy_dev" default="/dev/input/js0" />

@@ -2,7 +2,7 @@
 
 Crazyflie Ros platform for ecust
 
-依赖库：crazyflie_ros vicon_bridge
+依赖库：crazyflie_ros vicon_bridge hector_quadrotor_teleop
 
 ## 如果运行不出时候的解决办法：
 1. 检查硬件设备是否连接成功，要连接这么些设备
@@ -37,4 +37,9 @@ Crazyflie Ros platform for ecust
 
 `roslaunch leader_follower centralize.launch`
 
+
+bug 说明: 要使用手柄还需要hector_quadrotor这个git包,地址是:
+git@github.com:tu-darmstadt-ros-pkg/hector_quadrotor.git
+
+因为和其中gazebo的版本不兼容,所以在这个包里面需要吧所有关于gazebo的包都删除,否则编译不通过.
 
