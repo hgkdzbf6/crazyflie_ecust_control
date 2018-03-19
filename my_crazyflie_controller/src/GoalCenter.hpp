@@ -453,10 +453,12 @@ private:
 //			}
 			
 //从stick_goal读入，用这个
-//			v[0].x = stick_goal.pose.position.x;
-//			v[0].y = stick_goal.pose.position.y;
-//			v[0].z = stick_goal.pose.position.z;
-
+#ifdef STICK_CONTROL
+			v[0].x = stick_goal.pose.position.x;
+			v[0].y = stick_goal.pose.position.y;
+			v[0].z = stick_goal.pose.position.z;
+			ROS_INFO("stick_goal: %lf, %lf, %lf ",v[0].x,v[0].y,v[0].z);
+#endif
 
 			//第一种情况：绝对位置
 //			v_base[0] = generate_sin(times, 0, 1, 10, frequency, 0, 0, 0.8);

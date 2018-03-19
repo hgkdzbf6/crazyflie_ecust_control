@@ -2,8 +2,8 @@
 <!-- roslaunch hover_vicon hover_vicon.launch-->
 <launch>
   <!--输入参数，基本也应该不变吧-->
-  <arg name="uri" default="radio://0/100/2M/E7E7E7E701" />
-  <arg name="frame" default="/vicon/C1/C1" />  
+  <arg name="uri" default="radio://0/100/2M/E7E7E7E702" />
+  <arg name="frame" default="/vicon/C2/C2" />  
   <!-- <arg name="uri" default="radio://0/100/250K/E7E7E7E701" />
   <arg name="frame" default="/vicon/C1/C1" />-->
   <arg name="joy_dev" default="/dev/input/js0" />
@@ -27,8 +27,8 @@
       <param name="dev" value="$(arg joy_dev)" />
     </node>
     <!--这个是遥控器节点，日后可以改成用键盘来控制，就不用xbox遥控器了-->
-    <include file="$(find crazyflie_demo)/launch/xbox360.launch">
-    </include>
+    <!-- <include file="$(find crazyflie_demo)/launch/xbox360.launch">
+    </include> -->
     <!--这个是遥控器指令的映射，映射到控制器上，执行起飞降落等操作的呢，这个我记得我也修改过，改之-->
     <!--python 文件一定要加可执行权限的说-->
     <node name="joystick_controller" pkg="my_crazyflie_controller" type="myController.py" output="screen">

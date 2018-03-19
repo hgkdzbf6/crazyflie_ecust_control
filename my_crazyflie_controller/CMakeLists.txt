@@ -15,7 +15,8 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 find_package(Eigen REQUIRED)
 
 
-add_message_files(FILES
+add_message_files(
+  FILES
   LeaderController.msg
   ThreeAgentMsg.msg
   IDPose.msg
