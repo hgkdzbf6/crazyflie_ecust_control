@@ -2,13 +2,27 @@
 
 Crazyflie Ros platform for ecust
 
-依赖库：crazyflie_ros vicon_bridge hector_quadrotor_teleop
+## 依赖库
+  - [crazyflie_ros](https://github.com/whoenig/crazyflie_ros)
+  - vicon_bridge
+  - ~~hector_quadrotor~~ (现在用我的这套方案应该不需要这个库了)
+
+## 硬件检查：
+在软件连接之前先检查硬件连接
+  - vicon有没有打开 
+  - vicon的服务器的软件有没有打开
+  - 网线有没有插好
+  - crazyradio
+  - xbox360（我后面会尝试写个/弄来个键盘控制的）算了吧这个鸽了= 0
+
+## 驱动检查：
+有硬件的地方就有驱动，驱动主要包括crazyradio的驱动和手柄的驱动。
+1. crazyradio的驱动，按照[这篇帖子](http://blog.csdn.net/banzhuan133/article/details/76166160)进行：
+    
+2. 
+
 
 ## 如果运行不出时候的解决办法：
-1. 检查硬件设备是否连接成功，要连接这么些设备
-    - vicon的服务器
-    - crazyradio
-    - xbox360（我后面会尝试写个/弄来个键盘控制的）算了吧这个鸽了= 0
 
 2. 就算连接上之后，也得看下是否软件连上了吧
     - vicon的电脑连的局域网是不是和vicon一个网？

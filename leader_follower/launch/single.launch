@@ -11,9 +11,9 @@
   <arg name="joy_dev" default="/dev/input/js0" />
   <!-- 飞机的地址，以及坐标系-->
   <arg name="name1" default="agent0"/>
-  <arg name="frame_id_1" default="2"/>
-  <arg name="uri1" default="radio://0/100/2M/E7E7E7E702" />
-  <arg name="frame1" default="/vicon/C2/C2" />
+  <arg name="frame_id_1" default="1"/>
+  <arg name="uri1" default="radio://0/100/2M/E7E7E7E701" />
+  <arg name="frame1" default="/vicon/C1/C1" />
 
   <arg name="worldFrame" default="/world" />
   <arg name="stick_frame" default="/vicon/G1/G1"/>
